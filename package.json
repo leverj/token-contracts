@@ -1,0 +1,27 @@
+{
+  "name": "token-test-suite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsonsivar/token-test-suite.git"
+  },
+  "author": "@kidwai @stuarth1 @jsonsivar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jsonsivar/token-test-suite/issues"
+  },
+  "homepage": "https://github.com/jsonsivar/token-test-suite#readme",
+  "dependencies": {
+    "bn.js": "^4.11.8",
+    "eslint": "^4.9.0",
+    "web3": "^1.0.0-beta.23"
+  }
+}

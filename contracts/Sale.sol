@@ -1,7 +1,7 @@
 
 pragma solidity ^0.4.11;
 
-import "tokens/HumanStandardToken.sol";
+import "./HumanStandardToken.sol";
 import "./Disbursement.sol";
 import "./SafeMath.sol";
 

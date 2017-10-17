@@ -23,29 +23,25 @@ describe('HumanStandardToken', function () {
 
     describe("HumanStandardToken transfer function check", function (){
         it('Verifying that the HumanStandardToken transfer function is working as intended', async () => {
-            let contract = await token.deployHumanStandardToken();
-            let balance  = await contract.balanceOf(web3.eth.accounts[0]);
-            let transfer = await token.transferHumanStandardToken(contract);
-            let balance0  = await contract.balanceOf(web3.eth.accounts[0]);
-            let balance1  = await contract.balanceOf(web3.eth.accounts[1]);
-            assert(JSON.parse(balance) === 100, "Balances not being set properly");
-            assert(JSON.parse(balance0) === 40, "Balances not being transfered properly from account[0]");
-            assert(JSON.parse(balance1) === 60, "Balances not being transfered properly from account[1]");
+            let deploy = await token.deployHumanStandardToken();
+            let transfer = await token.transferHumanStandardToken(deploy);
+            let balance0  = await deploy.balanceOf(web3.eth.accounts[0]);
+            let balance1  = await deploy.balanceOf(web3.eth.accounts[1]);
+            assert(JSON.parse(balance0) === 60, "Balances not being transfered properly from account[0]");
+            assert(JSON.parse(balance1) === 40, "Balances not being transfered properly from account[1]");
         }).timeout(300000)
     })
+
+    // describe("HumanStandardToken approve/allowance function check", function(){
+    //     it("Verifying that the HumanStandardToken approve/allowance is working as intended", async () => {
+    //         let contract = await token.deployHumanStandardToken();
+
+    //     })
+    // })
 })
 
 
 //contract('HumanStandardToken', function(accounts) {
-
-    // it("Verifying the transfer function call works correctly", async () => {
-    //     let contract = await HumanStandardToken.new(100,'ConsenSys',10,'CS','0x5b1869d9a4c187f2eaa108f3062412ecf0526b24',20);
-    //     let transfer  = await contract.transfer(accounts[1], 60);
-    //     let balance0  = await contract.balanceOf(accounts[0]);
-    //     let balance1  = await contract.balanceOf(accounts[1]);
-    //     assert(JSON.parse(balance0) === 40, "Balances not being transfered properly from account[0]");
-    //     assert(JSON.parse(balance1) === 60, "Balances not being transfered properly from account[1]");
-    // });
 
     // it("Verifying the approve/allowance from function works correct", async () => {
     //     let contract = await HumanStandardToken.new(100,'ConsenSys',10,'CS','0x5b1869d9a4c187f2eaa108f3062412ecf0526b24',20);

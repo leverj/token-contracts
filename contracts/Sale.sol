@@ -12,7 +12,7 @@ contract Sale {
      */
 
     event TransferredFoundersTokens(address indexed beneficiary, address disburser, uint amount);
-     event TransferredPartnersTokens(address indexed beneficiary, address disburser, uint amount);
+    event TransferredPartnersTokens(address indexed beneficiary, address disburser, uint amount);
     event TransferredLiquidityTokens(address liquidityWallet, uint liquidityTokens);
     event TransferredPreSaleTokens(address indexed beneficiary, address disburser, uint amount);
     event PurchasedTokens(address indexed purchaser, uint amount);
@@ -30,23 +30,22 @@ contract Sale {
     uint public price;
 
     uint public freezeBlock;
-    uint public whitelistSaleStartBlock;
-    uint public publicSaleStartBlock;
+    uint public startBlock;
     uint public endBlock;
 
-    uint public foundersTokenCap = 200000000;
+    uint public foundersTokenCap = 0;
     uint public foundersTokenAllocated = 0;
 
-    uint public liquidityTokenCap = 300000000;
+    uint public liquidityTokenCap = 0;
     uint public liquidityTokenAllocated = 0;
 
-    uint public partnersTokenCap = 100000000;
+    uint public partnersTokenCap = 0;
     uint public partnersTokenAllocated = 0;
 
-    uint public preSaleTokenCap = 150000000;
+    uint public preSaleTokenCap = 0;
     uint public preSaleTokenAllocated = 0;
 
-    uint public publicSaleTokenCap = 250000000;
+    uint public publicSaleTokenCap = 0;
     uint public publicTokensSold = 0;
 
     bool public emergencyFlag = false;
@@ -65,11 +64,10 @@ contract Sale {
         uint8 _tokenDecimals,
         string _tokenSymbol,
         uint _freezeBlock,
-        uint _whitelistSaleStartBlock,
-        uint _publicSaleStartBlock,
+        uint _startBlock,
         uint _endBlock,
         uint _price)
-        checkBlockNumberInputs(_freezeBlock, _whitelistSaleStartBlock, _publicSaleStartBlock, _endBlock)
+        checkBlockNumberInputs(_freezeBlock, _startBlock, _endBlock)
         validPrice(_price)
     {
         owner = _owner;
@@ -77,12 +75,12 @@ contract Sale {
         token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol, address(this), _endBlock);
         
         freezeBlock = _freezeBlock;
-        whitelistSaleStartBlock = _whitelistSaleStartBlock;
-        publicSaleStartBlock = _publicSaleStartBlock;
+        startBlock = _startBlock;
         endBlock = _endBlock;
 
         price = _price;
 
+        token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
         assert(token.balanceOf(this) == _tokenSupply);
     }
@@ -208,15 +206,8 @@ contract Sale {
         uint purchaseAmount = msg.value / price;
         uint excessAmount = msg.value % price;
 
-        // dont need this because it will naturally just cap at whatever is left in sale contracts balance
-        /* if(publicTokensSold == 0){
-            publicSaleTokenCap = calculateNewPublicSaleCap();
-        }*/
-
-        if(block.number < publicSaleStartBlock){
-            require(whitelistRegistrants[msg.sender] >= (msg.value - excessAmount));
-            whitelistRegistrants[msg.sender] -= (msg.value-excessAmount);
-        }
+        //require(whitelistRegistrants[msg.sender] >= (msg.value - excessAmount));
+        //whitelistRegistrants[msg.sender] -= (msg.value-excessAmount);
 
         // Cannot purchase more tokens than this contract has available to sell
         require(purchaseAmount <= token.balanceOf(this));
@@ -281,14 +272,14 @@ contract Sale {
         price = _newPrice;
     }
 
-    function changeWhitelistStartBlock(uint _newBlock)
+    function changeStartBlock(uint _newBlock)
         onlyOwner
         notFrozen
     {
-        require(block.number <= _newBlock && _newBlock < publicSaleStartBlock);
+        require(block.number <= _newBlock && _newBlock < startBlock);
 
-        freezeBlock = _newBlock - (whitelistSaleStartBlock - freezeBlock);
-        whitelistSaleStartBlock = _newBlock;
+        freezeBlock = _newBlock - (startBlock - freezeBlock);
+        startBlock = _newBlock;
     }
 
     function emergencyToggle()
@@ -297,8 +288,9 @@ contract Sale {
         emergencyFlag = !emergencyFlag;
     }
     
-    // not a public function because we will call this based on off-chain data of already registered folks 
-    function addWhitelistSignature(address _purchaser, uint _amount, uint8 _v, bytes32 _r, bytes32 _s){
+    function addWhitelistSignature(address _purchaser, uint _amount, uint8 _v, bytes32 _r, bytes32 _s)
+        public
+    {
         if(ecrecover(termsAndConditionsIPFS, _v, _r, _s) == _purchaser){
             whitelistRegistrants[_purchaser] = _amount;
         }
@@ -314,11 +306,6 @@ contract Sale {
 
     modifier saleEnded {
         require(block.number >= endBlock);
-        _;
-    }
-
-    modifier saleStarted {
-        require(block.number >= whitelistSaleStartBlock);
         _;
     }
 
@@ -338,12 +325,14 @@ contract Sale {
     }
 
     modifier saleInProgress {
-        require(block.number >= whitelistSaleStartBlock && block.number < endBlock);
-    _;
+        require(block.number >= startBlock && block.number < endBlock);
+        _;
     }
 
     modifier setupComplete {
-        assert((foundersTokenAllocated == foundersTokenCap) && (preSaleTokenAllocated == preSaleTokenCap));
+        assert((foundersTokenAllocated == foundersTokenCap) 
+                && (preSaleTokenAllocated == preSaleTokenCap)
+                && (liquidityTokenAllocated == liquidityTokenCap));
         _;
     }
 
@@ -352,21 +341,10 @@ contract Sale {
         _;
     }
 
-    modifier checkBlockNumberInputs(uint _freeze, uint _whitelistStart, uint _publicStart, uint _end) {
+    modifier checkBlockNumberInputs(uint _freeze, uint _start, uint _end) {
         require(_freeze >= block.number
-        && _whitelistStart >= _freeze
-        && _publicStart >= _whitelistStart
-        && _end >= _publicStart);
-    _;
-    }
-
-    modifier ownerOrSender(address _recipient){
-        require(msg.sender == owner || msg.sender == _recipient);
-        _;
-    }
-
-    modifier hasTokens(address _investor){
-        require(token.balanceOf(_investor) > 0 );
+        && _start >= _freeze
+        && _end >= _start);
         _;
     }
 

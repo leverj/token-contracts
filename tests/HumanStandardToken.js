@@ -1,4 +1,3 @@
-//const HumanStandardToken = artifacts.require("../contracts/HumanStandardToken");
 var token           = require('../lib/HumanStandardToken');
 var assert          = require('assert');
 var Web3            = require('web3');

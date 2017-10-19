@@ -64,11 +64,4 @@ contract StandardToken is Token {
         require(msg.sender == sale || block.number >= endBlock);
         _;
     }
-
-
-    modifier onlySale()
-    {
-        require(msg.sender == sale);
-        _;
-    }
 }

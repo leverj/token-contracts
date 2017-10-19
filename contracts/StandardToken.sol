@@ -46,6 +46,7 @@ contract StandardToken is Token {
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
+        require(balances[msg.sender] >= _value);
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;

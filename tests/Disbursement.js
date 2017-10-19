@@ -11,17 +11,17 @@ describe('Disbursement', () => {
 		it('Verifying that the Disbursement contract can be initialized, and all initial variables are set', async () => {
                   let contract = await disbursement.deployDisbursement(web3.eth.accounts[1], 100, 1508347537);
                   const receiver = contract.receiver();
-                  const disbursement = contract.disbursementPeriod();
+                  const period = contract.disbursementPeriod();
                   const start = contract.startDate();
-                  const result = [await receiver, await disbursement, await start ];
+                  const result = [await receiver, await period, await start ];
                   assert(receiver === web3.eth.accounts[1], "Disbursement receiver not being set properly");
-                  assert(JSON.parse(disbursement) === 100, "Disbursement disbursementPeriod not being set properly");
+                  assert(JSON.parse(period) === 100, "Disbursement disbursementPeriod not being set properly");
                   assert(JSON.parse(start) === 1508347537, "Disbursement disbursementPeriod not being set properly");
 		}).timeout(300000);
       });
       describe('Disbursement Token setup', () => {
             it('Making sure that the token sale contract can be linked to this contract', async () => {
-                  const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 100000, 1508347537);
+                  const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
                   const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',"0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",20);
                   await HumanStandardToken.transferHumanStandardToken(humanContract, disbursementContract.address, 40);
                   const balance1  = await humanContract.balanceOf(disbursementContract.address);

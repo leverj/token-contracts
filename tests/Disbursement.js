@@ -1,6 +1,5 @@
 var disbursement              = require('../lib/Disbursement');
 var HumanStandardToken        = require('../lib/HumanStandardToken');
-var token                     = require('../lib/Token');
 var assert                    = require('assert');
 var Web3                      = require('web3');
 var web3                      = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));

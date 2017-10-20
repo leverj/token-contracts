@@ -142,14 +142,59 @@
 - call before sale ends
 
 ## Token
-STU to add based on his tests
+`HumanStandardToken()`
+- call with correct parameters
+
+`Transfer()`
+- call with correct parameters
+- call with incorrect parameters
+
+`approve()`
+- call with correct parameters
+- call with incorrect parameters
+
+`allowance()`
+- call with correct parameters
+- call with incorrect parameters
+
+`transferFrom()`
+- call with correct parameters
+- call with incorrect parameters
+
 
 ## Multisig
-STU to add based on his tests
+`MultiSigWallet()`
+- call with correct parameters
+
+`addOwner()`
+- call with correct parameters
+- call with incorrect parameters
+
+`removeOwner()`
+- call with correct parameters
+- call with incorrect parameters
+
+`replaceOwner()`
+- call with correct parameters
+- call with incorrect parameters
+
+`confirmTransaction()`
+- call with correct parameters
+- call with incorrect paramters
+
 
 ## Filter
 TBC
 
-## Disbursement
-TBC
 
+## Disbursement
+`Disbursement()`
+- call with correct parameters
+
+`setup()`
+- call with correct parameters
+- call with incorrect parameters
+
+`withdraw()`
+- call with correct paramters
+- call with incorrect parameters

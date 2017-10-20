@@ -99,6 +99,8 @@ contract Disbursement {
         uint maxTokens = (token.balanceOf(this) + withdrawnTokens) * (now - startDate) / disbursementPeriod;
         if (withdrawnTokens >= maxTokens || startDate > now)
             return 0;
+        if (maxTokens - withdrawnTokens > token.totalSupply())
+            return token.totalSupply();
         return maxTokens - withdrawnTokens;
     }
 }

@@ -46,6 +46,7 @@ contract StandardToken is Token {
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
+        require(balances[msg.sender] >= _value);
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -61,13 +62,6 @@ contract StandardToken is Token {
     modifier validTransfer()
     {
         require(msg.sender == sale || block.number >= endBlock);
-        _;
-    }
-
-
-    modifier onlySale()
-    {
-        require(msg.sender == sale);
         _;
     }
 }

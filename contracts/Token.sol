@@ -16,6 +16,7 @@ contract Token {
     uint256 public totalSupply;
     address public sale;
     uint public endBlock;
+    bool public transfersAllowed;
     
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance

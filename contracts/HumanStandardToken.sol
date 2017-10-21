@@ -45,6 +45,7 @@ contract HumanStandardToken is StandardToken {
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
         sale = _sale;
         endBlock = _endBlock;
+        transfersAllowed=false;
     }
 
     /* Approves and then calls the receiving contract */

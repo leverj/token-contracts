@@ -23,42 +23,52 @@ describe('HumanStandardToken', () => {
     });
 
     describe("HumanStandardToken transfer function check", () => {
+
         it('Verifying that the HumanStandardToken transfer function is working as intended', async () => {
             let contract = await token.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
-
-            it('should allow the sale address to transfer even before the lock is removed', async ()=> {
-                await token.transferHumanStandardToken(contract, web3.eth.accounts[1], 40);
-                const balance0  = contract.balanceOf(web3.eth.accounts[0]);
-                const balance1  = contract.balanceOf(web3.eth.accounts[1]);
-                const resultB = [ await balance0, await balance1 ];
-                assert(JSON.parse(balance0) === 60, "Balances not being transfered properly from account[0]");
-                assert(JSON.parse(balance1) === 40, "Balances not being transfered properly from account[1]");
-            });
-
-            it('should prevent transfers from non-sale addresses before removing the transfer lock', async ()=>{
-                await token.transferHumanStandardTokenAs(contract, web3.eth.accounts[1], web3.eth.accounts[0], 20);
-                const balance2  = contract.balanceOf(web3.eth.accounts[0]);
-                const balance3  = contract.balanceOf(web3.eth.accounts[1]);
-                const resultB = [ await balance2, await balance3 ];
-                assert(JSON.parse(balance2) === 60, "Balances erroneously being transfered from account[0]");
-                assert(JSON.parse(balance3) === 40, "Balances erroneously being transfered from account[1]");
-
-                it('remove transfer lock and now the transfers should go through', async ()=>{
-
-                    await token.removeTransferLockHumanStandardToken(contract, web3.eth.accounts[1]);
-                    await token.transferHumanStandardTokenAs(contract, web3.eth.accounts[1], web3.eth.accounts[0], 20);
-                    const balance4  = contract.balanceOf(web3.eth.accounts[0]);
-                    const balance5  = contract.balanceOf(web3.eth.accounts[1]);
-                    const resultB = [ await balance4, await balance5 ];
-                    assert(JSON.parse(balance4) === 80, "Balances not being transfered from account[0]");
-                    assert(JSON.parse(balance5) === 20, "Balances not being transfered from account[1]");
-
-                });
-
-            });
-
+            let tx1 = await token.removeTransferLockHumanStandardToken(contract, web3.eth.accounts[0]);
+            let tx2 = await token.transferHumanStandardToken(contract, web3.eth.accounts[1], 40);
+            const balance0  = contract.balanceOf(web3.eth.accounts[0]);
+            const balance1  = contract.balanceOf(web3.eth.accounts[1]);
+            const resultB = [ await balance0, await balance1 ];
+            assert(JSON.parse(balance0) === 60, "Balances not being transfered properly from account[0]");
+            assert(JSON.parse(balance1) === 40, "Balances not being transfered properly from account[1]");
         }).timeout(300000);
-    });
+
+
+        it('should allow the sale address to transfer even before the lock is removed', async ()=> {
+            let contract = await token.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+            await token.transferHumanStandardToken(contract, web3.eth.accounts[1], 40);
+            const balance0  = contract.balanceOf(web3.eth.accounts[0]);
+            const balance1  = contract.balanceOf(web3.eth.accounts[1]);
+            const resultB = [ await balance0, await balance1 ];
+            assert(JSON.parse(balance0) === 60, "Balances not being transfered properly from account[0]");
+            assert(JSON.parse(balance1) === 40, "Balances not being transfered properly from account[1]");
+        }).timeout(300000);
+
+        it('should prevent transfers from non-sale addresses before removing the transfer lock', async ()=>{
+            let contract = await token.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+            await token.transferHumanStandardTokenAs(contract, web3.eth.accounts[1], web3.eth.accounts[0], 20);
+            const balance2  = contract.balanceOf(web3.eth.accounts[0]);
+            const balance3  = contract.balanceOf(web3.eth.accounts[1]);
+            const resultB = [ await balance2, await balance3 ];
+            assert(JSON.parse(balance2) === 100, "Balances erroneously being transfered from account[0]");
+            assert(JSON.parse(balance3) === 0, "Balances erroneously being transfered from account[1]");
+        }).timeout(300000);
+
+        it('remove transfer lock and now the transfers should go through', async ()=>{
+            let contract = await token.deployHumanStandardToken(100,'ConsenSys',10,'CS', web3.eth.accounts[0]);
+            let tx1 = await token.transferHumanStandardToken(contract, web3.eth.accounts[1], 20);
+            let tx2 = await token.removeTransferLockHumanStandardToken(contract, web3.eth.accounts[0]);
+            let tx3 = await token.transferHumanStandardTokenAs(contract, web3.eth.accounts[1], web3.eth.accounts[0], 10);
+            const balance2  = contract.balanceOf(web3.eth.accounts[0]);
+            const balance3  = contract.balanceOf(web3.eth.accounts[1]);
+            const resultB = [ await balance2, await balance3 ];
+            assert(JSON.parse(balance2) === 90, "Balances not being transfered from account[0]");
+            assert(JSON.parse(balance3) === 10, "Balances not being transfered from account[1]");
+        }).timeout(300000);
+
+    }).timeout(300000);
 
     describe("HumanStandardToken approve/allowance function checks", () =>{
         it("Verifying that the HumanStandardToken approve/allowance is working as intended", async () => {

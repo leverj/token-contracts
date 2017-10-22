@@ -35,8 +35,7 @@ contract HumanStandardToken is StandardToken {
         string _tokenName,
         uint8 _decimalUnits,
         string _tokenSymbol,
-        address _sale,
-        uint _endBlock)
+        address _sale)
     {
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
@@ -44,8 +43,7 @@ contract HumanStandardToken is StandardToken {
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
         sale = _sale;
-        endBlock = _endBlock;
-        transfersAllowed=false;
+        transfersAllowed = false;
     }
 
     /* Approves and then calls the receiving contract */
@@ -58,5 +56,27 @@ contract HumanStandardToken is StandardToken {
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
+    }
+
+    function reversePurchase(address _tokenHolder)
+        onlySale
+    {
+        require(!transfersAllowed);
+        uint value = balances[_tokenHolder];
+        balances[_tokenHolder] -= value;
+        balances[sale] += value;
+        Transfer(_tokenHolder, sale, value);
+    }
+
+    function removeTransferLock()
+        onlySale
+    {
+        transfersAllowed = true;
+    }
+
+    modifier onlySale()
+    {
+        require(msg.sender == sale);
+        _;
     }
 }

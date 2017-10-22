@@ -56,24 +56,12 @@ contract StandardToken is Token {
       return allowed[_owner][_spender];
     }
 
-    function removeTransferLock()
-        onlySale
-    {
-        transfersAllowed = true;
-    }
-
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
-    modifier onlySale()
-    {
-        require(msg.sender == sale);
-        _;
-    }
-
     modifier validTransfer()
     {
-        require(msg.sender == sale || (block.number >= endBlock && transfersAllowed));
+        require(msg.sender == sale || transfersAllowed);
         _;
     }
 }

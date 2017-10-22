@@ -50,7 +50,7 @@ contract Sale {
         checkBlockNumberInputs(_freezeBlock, _startBlock, _endBlock)
     {
         owner = _owner;
-        token = new HumanStandardToken(TOTAL_SUPPLY, NAME, DECIMALS, SYMBOL, address(this), _endBlock);
+        token = new HumanStandardToken(TOTAL_SUPPLY, NAME, DECIMALS, SYMBOL, address(this));
         freezeBlock = _freezeBlock;
         startBlock = _startBlock;
         endBlock = _endBlock;
@@ -91,13 +91,13 @@ contract Sale {
     }
 
     // purposefully leaving this as not onlyOwner so that anyone can call it since it was advertised approach to leftover tokens
-    function lockUnsoldTokens()
+    function lockUnsoldTokens(address _unsoldTokensWallet)
         saleEnded
         setupComplete
     {
         //unsoldTokensWallet
         Disbursement disbursement = new Disbursement(
-            wallet,
+            _unsoldTokensWallet,
             1*365*24*60*60,
             block.timestamp
         );

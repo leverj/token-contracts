@@ -34,6 +34,10 @@ contract Filter {
         }
     }
 
+    function getBeneficiaryInfo(address _beneficiary) constant returns (uint, bool){
+        return (beneficiaries[_beneficiary].claimAmount, beneficiaries[_beneficiary].claimed);
+    }
+
     function setup(Disbursement _disburser)
         public
         onlyOwner

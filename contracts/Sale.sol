@@ -13,7 +13,6 @@ contract Sale {
     event TransferredVestedTokens(address indexed filter, address indexed vault, uint tokens);
     event PurchasedTokens(address indexed purchaser, uint amount);
     event LockedUnsoldTokens(uint numTokensLocked, address disburser);
-    event AllocatingTimeLockTokens(address beneficiary, uint tokens, uint timelock);
 
     // STORAGE
 
@@ -112,61 +111,47 @@ contract Sale {
     function distributeTimeLockedTokens(
         address[] _beneficiaries,
         uint[] _beneficiaryTokens,
-        uint[] _timelocks,
-        uint[] _breakdown
+        uint[] _timelocks
     ) 
         public
         onlyOwner
-    { 
+        saleNotEnded
+    {   
         assert(!setupCompleteFlag);
-        assert(_beneficiaryTokens.length < 51 && _timelocks.length < 51);
-        assert(_timelocks.length == _breakdown.length);
+        assert(_beneficiaryTokens.length < 11 && _timelocks.length < 11);
         assert(_beneficiaries.length == _beneficiaryTokens.length);
 
         /* Total number of tokens to be disbursed for a given tranch. Used when
            tokens are transferred to disbursement contracts. */
-        uint[] memory tokensPerTranch = new uint[](_timelocks.length);
-        
+        uint tokensPerTranch = 0;
+        // Alias of founderTimelocks.length for legibility
+        uint tranches = _timelocks.length;
         // The number of tokens which may be withdrawn per founder for each tranch
-        uint[][] memory beneficiaryTokensPerTranch = new uint[][](_timelocks.length);
-
-        for(uint l = 0; l < beneficiaryTokensPerTranch.length; l++){
-            beneficiaryTokensPerTranch[l] = new uint[](_beneficiaryTokens.length);
-        }
-
-        uint[] memory remainders = new uint[](_beneficiaries.length);
+        uint[] memory beneficiaryTokensPerTranch = new uint[](_beneficiaryTokens.length);
 
         // Compute foundersTokensPerTranch and tokensPerTranch
         for(uint i = 0; i < _beneficiaryTokens.length; i++) {
             require(privateAllocated + _beneficiaryTokens[i] <= MAX_PRIVATE);
             privateAllocated += _beneficiaryTokens[i];
-            remainders[i] = 0;
-
-            // forgive me for this second for loop
-            for(uint k = 0; k < _breakdown.length; k++){
-                uint tokens = _beneficiaryTokens[i] * _breakdown[k] / 100;
-                remainders[i] += _beneficiaryTokens[i] * _breakdown[k] % 100;
-                beneficiaryTokensPerTranch[k][i] = tokens;
-                tokensPerTranch[k] += tokens;
-                AllocatingTimeLockTokens(_beneficiaries[i], tokens, _timelocks[k]);
-            }
-
-            //adding remainders to the last tranch
-            beneficiaryTokensPerTranch[_timelocks.length-1][i] += remainders[i];
-            tokensPerTranch[_timelocks.length-1] = tokensPerTranch[_timelocks.length-1] + remainders[i];
+            beneficiaryTokensPerTranch[i] = _beneficiaryTokens[i]/tranches;
+            tokensPerTranch = tokensPerTranch + beneficiaryTokensPerTranch[i];
         }
 
-        for(uint j = 0; j < _timelocks.length; j++) {
-            Filter filter = new Filter(_beneficiaries, beneficiaryTokensPerTranch[j]);
+        /* Deploy disbursement and filter contract pairs, initialize both and store
+           filter addresses in filters array. Finally, transfer tokensPerTranch to
+           disbursement contracts. */
+        for(uint j = 0; j < tranches; j++) {
+            Filter filter = new Filter(_beneficiaries, beneficiaryTokensPerTranch);
             filters.push(filter);
             Disbursement vault = new Disbursement(filter, 1, _timelocks[j]);
             // Give the disbursement contract the address of the token it disburses.
             vault.setup(token);             
-
+            /* Give the filter contract the address of the disbursement contract
+               it access controls */
             filter.setup(vault);             
             // Transfer to the vault the tokens it is to disburse
-            assert(token.transfer(vault, tokensPerTranch[j]));
-            TransferredVestedTokens(filter, vault, tokensPerTranch[j]);
+            assert(token.transfer(vault, tokensPerTranch));
+            TransferredVestedTokens(filter, vault, tokensPerTranch);
         }
 
         assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
@@ -174,8 +159,9 @@ contract Sale {
 
     function distributePresaleTokens(address[] _buyers, uint[] _amounts)
         onlyOwner
+        saleNotEnded
     {
-        require(_buyers.length < 51);
+        require(_buyers.length < 11);
         require(_buyers.length == _amounts.length);
 
         for(uint i=0; i < _buyers.length; i++){
@@ -190,6 +176,12 @@ contract Sale {
         onlyOwner
     {
         token.removeTransferLock();
+    }
+
+    function reversePurchase(address _tokenHolder)
+        onlyOwner
+    {
+        token.reversePurchase(_tokenHolder);
     }
 
     function setSetupComplete()
@@ -236,8 +228,9 @@ contract Sale {
     
     function addWhitelist(address[] _purchaser, uint[] _amount)
         onlyOwner
+        saleNotEnded
     {
-        assert(_purchaser.length < 51 );
+        assert(_purchaser.length < 11 );
         assert(_purchaser.length == _amount.length);
         for(uint i = 0; i < _purchaser.length; i++) {
             whitelistRegistrants[_purchaser[i]] = _amount[i];
@@ -248,6 +241,11 @@ contract Sale {
 
     modifier saleEnded {
         require(block.number >= endBlock);
+        _;
+    }
+
+    modifier saleNotEnded {
+        require(block.number < endBlock);
         _;
     }
 

@@ -46,6 +46,7 @@ contract Sale {
         uint _freezeBlock,
         uint _startBlock,
         uint _endBlock)
+        public 
         checkBlockNumberInputs(_freezeBlock, _startBlock, _endBlock)
     {
         owner = _owner;
@@ -59,6 +60,7 @@ contract Sale {
     }
 
     function purchaseTokens()
+        public
         payable
         setupComplete
         notInEmergency
@@ -90,6 +92,7 @@ contract Sale {
     }
 
     function lockUnsoldTokens(address _unsoldTokensWallet)
+        public
         saleEnded
         setupComplete
         onlyOwner
@@ -158,6 +161,7 @@ contract Sale {
     }
 
     function distributePresaleTokens(address[] _buyers, uint[] _amounts)
+        public
         onlyOwner
         saleNotEnded
     {
@@ -173,30 +177,45 @@ contract Sale {
     }
 
     function removeTransferLock()
+        public
         onlyOwner
     {
         token.removeTransferLock();
     }
 
     function reversePurchase(address _tokenHolder)
+        payable
+        public
         onlyOwner
     {
+        uint refund = token.balanceOf(_tokenHolder)*price_in_wei;
+        require(msg.value >= refund);
+        uint excessAmount = msg.value - refund;
+
+        if (excessAmount > 0) {
+            msg.sender.transfer(excessAmount);
+        }
+
+        _tokenHolder.transfer(refund);
         token.reversePurchase(_tokenHolder);
     }
 
     function setSetupComplete()
+        public
         onlyOwner
     {
         setupCompleteFlag = true;
     }
 
     function configureWallet(address _wallet)
+        public
         onlyOwner
     {
         wallet = _wallet;
     }
 
     function changeOwner(address _newOwner)
+        public
         onlyOwner
     {
         require(_newOwner != 0);
@@ -204,6 +223,7 @@ contract Sale {
     }
 
     function changePrice(uint _newPrice)
+        public
         onlyOwner
         notFrozen
         validPrice(_newPrice)
@@ -212,6 +232,7 @@ contract Sale {
     }
 
     function changeStartBlock(uint _newBlock)
+        public
         onlyOwner
         notFrozen
     {
@@ -221,12 +242,14 @@ contract Sale {
     }
 
     function emergencyToggle()
+        public
         onlyOwner
     {
         emergencyFlag = !emergencyFlag;
     }
     
     function addWhitelist(address[] _purchaser, uint[] _amount)
+        public
         onlyOwner
         saleNotEnded
     {

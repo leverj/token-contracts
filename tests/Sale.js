@@ -6,7 +6,6 @@ var Web3            			= require('web3');
 var web3            			= new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
 describe('Sale Tests', ()=>{
-
 	
 	describe('sale end-to-end test', () => {
 
@@ -91,6 +90,7 @@ describe('Sale Tests', ()=>{
 
 		}).timeout(3000000);
 
+		/*this also needs updating based on reversion of distribute function
 		describe('distribute private sale tokens', () => {
 			const beneficiaries = [web3.eth.accounts[1], web3.eth.accounts[2]];
 			const tokens = [10000000000000, 50000000000000];
@@ -101,38 +101,42 @@ describe('Sale Tests', ()=>{
 				await sale.distributeTimeLockedTokens(testSale.address, beneficiaries, tokens, timelocks, breakdown);
 			}).timeout(300000);
 
-			// TODO: NEEDS WAY MORE IN HERE
+			// next test does more in here!
 
 		}).timeout(3000000);
+		*/
 
 		describe('set wallet as ETH beneficiary for the sale', () => {
 			const beneficiary = web3.eth.accounts[3];
 
 			it('trying to set the wallet as a non-owner should fail', async () => {
-				var txHash = await sale.configureWalletAs(web3.eth.accounts[1], testSale.address, beneficiary);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
+				let txHash = await sale.configureWalletAs(web3.eth.accounts[1], testSale.address, beneficiary);
+				let newWallet = await testSale.wallet();
+				assert(newWallet === "0x0000000000000000000000000000000000000000", 'wallet should not have been set');
 			}).timeout(3000000);
 
 			it('querying the wallet on the contract should give old beneficiary', async () => {
-				var configuredWallet = testSale.wallet();
+				let configuredWallet = testSale.wallet();
 				assert(configuredWallet != beneficiary, 'the wallet should not have been updated but it was');
 			}).timeout(3000000);
 
 			it('trying to set the wallet as the owner should finish without errors', async () => {
-				var txHash = await sale.configureWallet(testSale.address, beneficiary);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should not have went through');
+				let txHash = await sale.configureWallet(testSale.address, beneficiary);
+				let newWallet = await testSale.wallet();
+				assert(newWallet == beneficiary, 'wallet should have been set properly');
+			}).timeout(3000000);
 
-				it('querying the wallet on the contract should give the new beneficiary', async () => {
-					var configuredWallet = testSale.wallet();
-					assert(configuredWallet === beneficiary, 'the new wallet was not configured successfully');
-				}).timeout(3000000);
+			it('querying the wallet on the contract should give the new beneficiary', async () => {
+				let txHash = await sale.configureWallet(testSale.address, beneficiary);
+				let configuredWallet = await testSale.wallet();
+				assert(configuredWallet === beneficiary, 'the new wallet was not configured successfully');
 			}).timeout(3000000);
 
 		}).timeout(3000000);
 
 		describe('add whitelist entries', () => {
-			var addresses = [];
-			var amounts = [];
+			let addresses = [];
+			let amounts = [];
 
 			for(var i = 10; i < web3.eth.accounts.length; i++){
 				addresses.push(web3.eth.accounts[i]);
@@ -140,32 +144,20 @@ describe('Sale Tests', ()=>{
 			}
 
 			it('whitelist entry should NOT be processed if called by a non-owner', async () => {
-				var txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale.address, addresses, amounts);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale.address, addresses, amounts);
 
 				for(var i = 0; i < addresses.length; i++){
-
-					it('address ' + addresses[i] + ' should not be in the whitelist entry', async () => {
-						var whitelistedAmount = testSale.whitelistRegistrants(addresses[i]);
-						assert(whitelistedAmount != 0, 'this address incorrectly has a whitelisted amount');
-					}).timeout(3000000);
-
+					let whitelistedAmount = await testSale.whitelistRegistrants(addresses[i]);
+					assert(JSON.parse(whitelistedAmount) === 0, 'this address incorrectly has a whitelisted amount');
 				}
 
 			}).timeout(3000000);
 
 			it('whitelist entry should be processed without failure', async () => {
-				var txHash = await sale.addWhitelist(testSale.address, addresses, amounts);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should have went through');
-
+				let txHash = await sale.addWhitelist(testSale.address, addresses, amounts);
 				for(var i = 0; i < addresses.length; i++){
-
-					it('address ' + addresses[i] + ' should not be in the whitelist entry', async () => {
-						var whitelistedAmount = testSale.whitelistRegistrants(addresses[i]);
-						assert(whitelistedAmount === 0, 'this address amount was not set');
-
-					}).timeout(3000000);
-
+					let whitelistedAmount = await testSale.whitelistRegistrants(addresses[i]);
+					assert(JSON.parse(whitelistedAmount) === amounts[i], 'this address amount was not set');
 				}
 			}).timeout(3000000);
 
@@ -174,32 +166,20 @@ describe('Sale Tests', ()=>{
 		describe('after all configuration has been done, flag setup complete', () => {
 
 			it('configuration flag be false initially', async ()=> {
-				var existingFlag = testSale.setupCompleteFlag();
+				let existingFlag = testSale.setupCompleteFlag();
 				assert(!existingFlag, 'the setup complete flag is prematurely set');
 			}).timeout(3000000);
 
 			it('updating the setup flag as a non-owner should fail', async ()=> {
-
-				var txHash = await sale.setSetupCompleteAs(web3.eth.accounts[1], testSale.address);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
-
-				it('configuration flag shound not be set', async ()=> {
-					var currentFlag = testSale.setupCompleteFlag();
-					assert(!currentFlag, 'a non-owner was incorrectly able to set the setup flag');
-				}).timeout(3000000);
-
+				let txHash = await sale.setSetupCompleteAs(web3.eth.accounts[1], testSale.address);
+				let newFlag = await testSale.setupCompleteFlag();
+				assert(newFlag === false, 'flag should still be false since non-owner tried calling');
 			}).timeout(3000000);
 
 			it('updating the setup flag as an owner should go through', async ()=> {
-
-				var txHash = await sale.setSetupComplete(testSale.address);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should have went through');
-
-				it('configuration flag shound not be set', async ()=> {
-					var currentFlag = testSale.setupCompleteFlag();
-					assert(!currentFlag, 'a non-owner was incorrectly able to set the setup flag');
-				}).timeout(3000000);
-
+				let txHash = await sale.setSetupComplete(testSale.address);
+				let newFlag = testSale.setupCompleteFlag();
+				assert(newFlag, 'flag should be set now since an owner called it');
 			}).timeout(3000000);
 
 		}).timeout(3000000);
@@ -214,7 +194,7 @@ describe('Sale Tests', ()=>{
 		var saleStarted = false;
 		var saleEnded = false;
 
-		var testSale;
+		var testSale1;
 		var owner = web3.eth.accounts[0];
 		var freezeBlock = web3.eth.blockNumber + 10;
 		var startBlock = freezeBlock + 5;
@@ -232,11 +212,11 @@ describe('Sale Tests', ()=>{
 						break;
 					case startBlock-3:
 						console.log('3 blocks before sale start');
-						testOnBeforeSaleStart(testSale);
+						testOnBeforeSaleStart(testSale1);
 					case startBlock:
 						saleStarted = true;
 						console.log('sale has now started');
-						testsOnSaleStart(testSale);
+						testsOnSaleStart(testSale1);
 						break;
 					case endBlock:
 						saleEnded = true;
@@ -304,20 +284,20 @@ describe('Sale Tests', ()=>{
 		    const expectedEmergencyFlag = false;
 
 			it('sale should have the correct parameters saved', async () => {
-				testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
-				let actualOwner =  testSale.owner();
-				let actualFreezeBlock =  testSale.freezeBlock();
+				testSale1 = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
+				let actualOwner =  testSale1.owner();
+				let actualFreezeBlock =  testSale1.freezeBlock();
 				let actualStartBlock =  testSale.startBlock();
-				let actualEndBlock =  testSale.endBlock();
-				let actualTOTAL_SUPPLY =  testSale.TOTAL_SUPPLY();
-				let actualMAX_PRIVATE =  testSale.MAX_PRIVATE();
-				let actualDECIMALS =  testSale.DECIMALS();
-				let actualNAME =  testSale.NAME();
-				let actualSYMBOL =  testSale.SYMBOL();
-				let actualprice_inwei =  testSale.price_in_wei();
-				let actualprivateAllocated =  testSale.privateAllocated();
-				let actualSetupCompleteFlag =  testSale.setupCompleteFlag();
-				let actualEmergencyFlag =  testSale.emergencyFlag();
+				let actualEndBlock =  testSale1.endBlock();
+				let actualTOTAL_SUPPLY =  testSale1.TOTAL_SUPPLY();
+				let actualMAX_PRIVATE =  testSale1.MAX_PRIVATE();
+				let actualDECIMALS =  testSale1.DECIMALS();
+				let actualNAME =  testSale1.NAME();
+				let actualSYMBOL =  testSale1.SYMBOL();
+				let actualprice_inwei =  testSale1.price_in_wei();
+				let actualprivateAllocated =  testSale1.privateAllocated();
+				let actualSetupCompleteFlag =  testSale1.setupCompleteFlag();
+				let actualEmergencyFlag =  testSale1.emergencyFlag();
 				assert(owner === actualOwner, "owner not saved properly");
 				assert(freezeBlock === JSON.parse(actualFreezeBlock), "freezeBlock not saved properly");
 				assert(startBlock === JSON.parse(actualStartBlock), "starBlock not saved properly");
@@ -334,12 +314,12 @@ describe('Sale Tests', ()=>{
 			}).timeout(3000000);
 
 			it('underlying token should have the correct parameters saved', async () => {
-				let tokenAddress = await testSale.token();
+				let tokenAddress = await testSale1.token();
 	            let token = await HumanStandardToken.at(tokenAddress);
 				const expectedVersion = 'H0.1';
 				const expectedTotalSupply = expectedTOTAL_SUPPLY;
 				const expectedBalanceOfSale = 1000000000000000000;
-				const expectedSaleAddress = testSale.address;
+				const expectedSaleAddress = testSale1.address;
 				const expectedTransferLock = false;
 
 				let actualName = token.name();
@@ -347,7 +327,7 @@ describe('Sale Tests', ()=>{
 	            let actualSymbol = token.symbol();
 	            let actualVersion = token.version();
 	            let actualTotalSupply = token.totalSupply();
-	            let actualBalanceOfSale = token.balanceOf(testSale.address);
+	            let actualBalanceOfSale = token.balanceOf(testSale1.address);
 	            let actualSaleAddress = token.sale();
 	            let actualTransferLock = token.transfersAllowed();
 				
@@ -366,6 +346,7 @@ describe('Sale Tests', ()=>{
 
 		describe('distribute private time locked tokens', () => {
 
+			/* TODO: update based reversion back to previous version of distribute function
 			const beneficiaries = [web3.eth.accounts[1], web3.eth.accounts[2]];
 			const tokens = [100000000000000000, 300000000000000000];
 			const currentTimeStamp = Math.floor(Date.now() / 1000);
@@ -374,16 +355,16 @@ describe('Sale Tests', ()=>{
 			const expectedCount = timelocks.length;
 
 			it('filters should be created', async () => {
-				let privateAllocatedBeforeTimeLock = testSale.privateAllocated();
-				await sale.distributeTimeLockedTokens(testSale.address, beneficiaries, tokens, timelocks, breakdown);
-				let privateAllocatedAfterTimeLock = testSale.privateAllocated();
+				let privateAllocatedBeforeTimeLock = testSale1.privateAllocated();
+				await sale.distributeTimeLockedTokens(testSale1.address, beneficiaries, tokens, timelocks, breakdown);
+				let privateAllocatedAfterTimeLock = testSale1.privateAllocated();
 				assert(privateAllocatedBeforeTimeLock != privateAllocatedAfterTimeLock, 'private allocated should not be the same after timelock');
 			}).timeout(300000);
 
 			it('should have an address for disbursement filters ', async ()=> {
-				let filterAddress0 = testSale.filters(0);
-				let filterAddress1 = testSale.filters(1);
-				let filterAddress2 = testSale.filters(2);
+				let filterAddress0 = testSale1.filters(0);
+				let filterAddress1 = testSale1.filters(1);
+				let filterAddress2 = testSale1.filters(2);
 				assert(web3.isAddress(filterAddress0) === true, 'filter contract at index 0 does not have an address');
 				assert(web3.isAddress(filterAddress1) === true, 'filter contract at index 1 does not have an address');
 				assert(web3.isAddress(filterAddress2) === true, 'filter contract at index 2 does not have an address');
@@ -391,96 +372,96 @@ describe('Sale Tests', ()=>{
 
 			it('should have the correct properties on filters', async ()=> {
 
-				var filterAddress0 = testSale.filters(0);
+				var filterAddress0 = testSale1.filters(0);
 				let filter0 = await Filter.at(filterAddress0);
 				var disburserAddress0 = filter0.disburser();
 				var filterOwner0 = filter0.owner();
 				assert(web3.isAddress(disburserAddress0) === true, 'filter contract at index does not have a valid address for its disburser');
-				assert(filterOwner0 === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner0 === testSale1.address, 'the incorrect owner was set for the filter index ');
 
-				var filterAddress1 = testSale.filters(1);
+				var filterAddress1 = testSale1.filters(1);
 				let filter1 = await Filter.at(filterAddress1);
 				var disburserAddress1 = filter1.disburser();
 				var filterOwner1 = filter1.owner();
 				assert(web3.isAddress(disburserAddress1) === true, 'filter contract at index does not have a valid address for its disburser');
-				assert(filterOwner1 === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner1 === testSale1.address, 'the incorrect owner was set for the filter index ');
 
-				var filterAddress2 = testSale.filters(2);
+				var filterAddress2 = testSale1.filters(2);
 				let filter2 = await Filter.at(filterAddress2);
 				var disburserAddress2 = filter2.disburser();
 				var filterOwner2 = filter2.owner();
 				assert(web3.isAddress(disburserAddress2) === true, 'filter contract at index does not have a valid address for its disburser');
-				assert(filterOwner2 === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner2 === testSale1.address, 'the incorrect owner was set for the filter index ');
 
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 0 beneficiary 0 ', async ()=> {
-				var filterAddress = testSale.filters(0);
+				var filterAddress = testSale1.filters(0);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[0]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[0]);
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 0 beneficiary 1 ', async ()=> {
-				var filterAddress = testSale.filters(0);
+				var filterAddress = testSale1.filters(0);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[1]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[1]);
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 1 beneficiary 0 ', async ()=> {
-				var filterAddress = testSale.filters(1);
+				var filterAddress = testSale1.filters(1);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[0]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[0]);
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 1 beneficiary 1 ', async ()=> {
-				var filterAddress = testSale.filters(1);
+				var filterAddress = testSale1.filters(1);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[1]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[1]);
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 2 beneficiary 0 ', async ()=> {
-				var filterAddress = testSale.filters(2);
+				var filterAddress = testSale1.filters(2);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[0]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[0]);
 			}).timeout(300000);
 
 			it('should have the correct information for timelock 2 beneficiary 1 ', async ()=> {
-				var filterAddress = testSale.filters(2);
+				var filterAddress = testSale1.filters(2);
 				let filter = await Filter.at(filterAddress);
 				var disburserAddress = filter.disburser();
 				assert(web3.isAddress(disburserAddress) === true, 'filter does not have valid address for disburser');
 				var filterOwner = filter.owner();
-				assert(filterOwner === testSale.address, 'the incorrect owner was set for the filter index ');
+				assert(filterOwner === testSale1.address, 'the incorrect owner was set for the filter index ');
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
 				assert(info[0] != 0, 'claim amount is incorrect for ' + beneficiaries[1]);
 				assert(info[1] === false, 'claimed flag is incorrect for ' + beneficiaries[1]);
@@ -488,7 +469,7 @@ describe('Sale Tests', ()=>{
 
 
 			it('it should not allow the beneficiary 0 to withdraw from filter 0', async ()=> {
-				var filterAddress = testSale.filters(0);
+				var filterAddress = testSale1.filters(0);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[0]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
@@ -498,7 +479,7 @@ describe('Sale Tests', ()=>{
 
 
 			it('it should not allow the beneficiary 1 to withdraw from filter 0', async ()=> {
-				var filterAddress = testSale.filters(0);
+				var filterAddress = testSale1.filters(0);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[1]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
@@ -507,7 +488,7 @@ describe('Sale Tests', ()=>{
 			}).timeout(300000);
 
 			it('it should not allow the beneficiary 0 to withdraw from filter 1', async ()=> {
-				var filterAddress = testSale.filters(1);
+				var filterAddress = testSale1.filters(1);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[0]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
@@ -517,7 +498,7 @@ describe('Sale Tests', ()=>{
 
 
 			it('it should not allow the beneficiary 1 to withdraw from filter 1', async ()=> {
-				var filterAddress = testSale.filters(1);
+				var filterAddress = testSale1.filters(1);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[1]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
@@ -527,7 +508,7 @@ describe('Sale Tests', ()=>{
 
 
 			it('it should not allow the beneficiary 0 to withdraw from filter 2', async ()=> {
-				var filterAddress = testSale.filters(2);
+				var filterAddress = testSale1.filters(2);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[0]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[0]);
@@ -537,7 +518,7 @@ describe('Sale Tests', ()=>{
 
 
 			it('it should not allow the beneficiary 1 to withdraw from filter 2', async ()=> {
-				var filterAddress = testSale.filters(2);
+				var filterAddress = testSale1.filters(2);
 				let filter = await Filter.at(filterAddress);
 				await Filter.claim(filterAddress, beneficiaries[1]);
 				var info = filter.getBeneficiaryInfo(beneficiaries[1]);
@@ -548,42 +529,44 @@ describe('Sale Tests', ()=>{
 
 			//TODO: wait for the vesting time and then retry the withdrawals
 
-
+		*/
 		}).timeout(3000000);
 
 		//TODO: add presale functions
 
+		
 		describe('set wallet as ETH beneficiary for the sale', () => {
 			const beneficiary = web3.eth.accounts[3];
 
 			it('trying to set the wallet as a non-owner should fail', async () => {
-				var txHash = await sale.configureWalletAs(web3.eth.accounts[1], testSale.address, beneficiary);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
+				let txHash = await sale.configureWalletAs(web3.eth.accounts[1], testSale1.address, beneficiary);
+				let newWallet = await testSale1.wallet();
+				console.log('newWallet: ' + newWallet);
+				assert(newWallet === "0x0000000000000000000000000000000000000000", 'wallet should not have been set');
+			}).timeout(3000000);
 
-				it('querying the wallet on the contract should give old beneficiary', async () => {
-					var configuredWallet = testSale.wallet();
-					assert(configuredWallet != beneficiary, 'the wallet should not have been updated but it was');
-				}).timeout(300000);
-
-			}).timeout(300000);
-
+			it('querying the wallet on the contract should give old beneficiary', async () => {
+				let configuredWallet = testSale1.wallet();
+				assert(configuredWallet != beneficiary, 'the wallet should not have been updated but it was');
+			}).timeout(3000000);
 
 			it('trying to set the wallet as the owner should finish without errors', async () => {
-				var txHash = await sale.configureWallet(testSale.address, beneficiary);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction was supposed to go through');
+				let txHash = await sale.configureWallet(testSale1.address, beneficiary);
+				let newWallet = await testSale1.wallet();
+				assert(newWallet == beneficiary, 'wallet should have been set properly');
+			}).timeout(3000000);
 
-				it('querying the wallet on the contract should give the new beneficiary', async () => {
-					var configuredWallet = testSale.wallet();
-					assert(configuredWallet === beneficiary, 'the new wallet was not configured successfully');
-				}).timeout(300000);
+			it('querying the wallet on the contract should give the new beneficiary', async () => {
+				let txHash = await sale.configureWallet(testSale1.address, beneficiary);
+				let configuredWallet = await testSale1.wallet();
+				assert(configuredWallet === beneficiary, 'the new wallet was not configured successfully');
+			}).timeout(3000000);
 
-			}).timeout(300000);
-
-		}).timeout(300000);
+		}).timeout(3000000);
 
 		describe('add whitelist entries', () => {
-			var addresses = [];
-			var amounts = [];
+			let addresses = [];
+			let amounts = [];
 
 			for(var i = 10; i < web3.eth.accounts.length; i++){
 				addresses.push(web3.eth.accounts[i]);
@@ -591,113 +574,47 @@ describe('Sale Tests', ()=>{
 			}
 
 			it('whitelist entry should NOT be processed if called by a non-owner', async () => {
-				var txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale.address, addresses, amounts);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale1.address, addresses, amounts);
 
 				for(var i = 0; i < addresses.length; i++){
-
-					it('address ' + addresses[i] + ' should not be in the whitelist entry', async () => {
-						var whitelistedAmount = testSale.whitelistRegistrants(addresses[i]);
-						assert(whitelistedAmount != 0, 'this address incorrectly has a whitelisted amount');
-
-					}).timeout(300000);
-
+					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);
+					assert(JSON.parse(whitelistedAmount) === 0, 'this address incorrectly has a whitelisted amount');
 				}
 
-			}).timeout(300000);
+			}).timeout(3000000);
 
 			it('whitelist entry should be processed without failure', async () => {
-				var txHash = await sale.addWhitelist(testSale.address, addresses, amounts);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should have went through');
-
+				let txHash = await sale.addWhitelist(testSale1.address, addresses, amounts);
 				for(var i = 0; i < addresses.length; i++){
-
-					it('address ' + addresses[i] + ' should not be in the whitelist entry', async () => {
-						var whitelistedAmount = testSale.whitelistRegistrants(addresses[i]);
-						assert(whitelistedAmount === 0, 'this address amount was not set');
-					}).timeout(300000);
-
+					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);
+					assert(JSON.parse(whitelistedAmount) === amounts[i], 'this address amount was not set');
 				}
-			}).timeout(300000);
+			}).timeout(3000000);
 
-		});
+		}).timeout(3000000);
 
 		describe('after all configuration has been done, flag setup complete', () => {
 
 			it('configuration flag be false initially', async ()=> {
-				var existingFlag = testSale.setupCompleteFlag();
+				let existingFlag = testSale1.setupCompleteFlag();
 				assert(!existingFlag, 'the setup complete flag is prematurely set');
-			}).timeout(300000);
+			}).timeout(3000000);
 
 			it('updating the setup flag as a non-owner should fail', async ()=> {
-
-				var txHash = await sale.setSetupCompleteAs(web3.eth.accounts[1], testSale.address);
-				assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
-
-				it('configuration flag shound not be set', async ()=> {
-					var currentFlag = testSale.setupCompleteFlag();
-					assert(!currentFlag, 'a non-owner was incorrectly able to set the setup flag');
-				}).timeout(300000);
-
-			}).timeout(300000);
+				let txHash = await sale.setSetupCompleteAs(web3.eth.accounts[1], testSale1.address);
+				let newFlag = await testSale1.setupCompleteFlag();
+				assert(newFlag === false, 'flag should still be false since non-owner tried calling');
+			}).timeout(3000000);
 
 			it('updating the setup flag as an owner should go through', async ()=> {
+				let txHash = await sale.setSetupComplete(testSale1.address);
+				let newFlag = testSale1.setupCompleteFlag();
+				assert(newFlag, 'flag should be set now since an owner called it');
+			}).timeout(3000000);
 
-				var txHash = await sale.setSetupComplete(testSale.address);
-				assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should have went through');
+		}).timeout(3000000);
 
-				it('configuration flag shound not be set', async ()=> {
-					var currentFlag = testSale.setupCompleteFlag();
-					assert(!currentFlag, 'a non-owner was incorrectly able to set the setup flag');
-				}).timeout(300000);
-
-			}).timeout(300000);
-
-		}).timeout(300000);
-
-		describe('lock unsold tokens after the sale', () => {
-
-			it('should not allow anyone to lock unsold before the sale finishes', async ()=> {
-				if(testSale.endBlock() > web3.eth.blockNumber){
-					let wallet = testSale.wallet();
-					let tokenAddress = await testSale.token();
-					let token = await HumanStandardToken.at(tokenAddress);
-					var previousBalance = token.balanceOf(wallet);
-
-					var txHash = await sale.lockUnsoldTokens(web3.eth.accounts[0], testSale.address, web3.eth.accounts[9]);
-					assert(!web3.eth.getTransaction(txHash).blockNumber, 'this transaction should not have went through');
-
-					it('should not have updated the token balance of the wallet address', async ()=> {
-						var newBalance = token.balanceOf(wallet);
-						assert(newBalance === previousBalance, 'tokens were erroneously locked')
-					}).timeout(300000);
-				}
-			}).timeout(300000);
-
-			it('should allow someone to unlock unsold tokens', async ()=> {
-
-				var endBlock = testSale.endBlock();
-				console.log('waiting for end block ...');
-				while(web3.eth.blockNumber < endBlock){
-				}
-
-				it('should allow anyone to lock unsold after the sale finishes', async ()=> {
-					let tokenAddress = await testSale.token();
-					let token = await HumanStandardToken.at(tokenAddress);
-					let amountToLock = token.balanceOf(testSale.address);
-					var txHash = await sale.lockUnsoldTokens(web3.eth.accounts[7], testSale.address, web3.eth.accounts[9]);
-					assert(web3.eth.getTransaction(txHash).blockNumber > 0, 'this transaction should not have went through');
-
-					it('should have updated the token balance of the wallet address', async ()=> {
-						var newBalance = token.balanceOf(wallet);
-						assert(newBalance = previousBalance + amountToLock, 'tokens were erroneously locked');
-					}).timeout(300000);
-
-				}).timeout(300000);
-
-			}).timeout(300000);
-
-		}).timeout(300000);
+		//TODO: test lock removal and reversal from the Sale contract
 
 	});
 

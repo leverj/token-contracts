@@ -108,6 +108,7 @@ contract MultiSigWallet {
 
     /// @dev Fallback function allows to deposit ether
     function()
+        public
         payable
     {
         if (msg.value > 0)
@@ -245,13 +246,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
         executable(transactionId)
     {
-        Transaction tx = transactions[transactionId];
-        tx.executed = true;
-        if (tx.destination.call.value(tx.value)(tx.data))
+        Transaction txToExecute = transactions[transactionId];
+        txToExecute.executed = true;
+        if (txToExecute.destination.call.value(txToExecute.value)(txToExecute.data))
             Execution(transactionId);
         else {
             ExecutionFailure(transactionId);
-            tx.executed = false;
+            txToExecute.executed = false;
         }
     }
 

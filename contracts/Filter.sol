@@ -21,8 +21,9 @@ contract Filter {
 
     function Filter(
         address[] _beneficiaries,
-        uint[] _beneficiaryTokens
-    ) {
+        uint[] _beneficiaryTokens) 
+        public
+    {
         owner = msg.sender;
         for(uint i = 0; i < _beneficiaries.length; i++) {
             beneficiaries[_beneficiaries[i]] = Beneficiary({
@@ -34,7 +35,7 @@ contract Filter {
         }
     }
 
-    function getBeneficiaryInfo(address _beneficiary) constant returns (uint, bool){
+    function getBeneficiaryInfo(address _beneficiary) public constant returns (uint, bool)  {
         return (beneficiaries[_beneficiary].claimAmount, beneficiaries[_beneficiary].claimed);
     }
 

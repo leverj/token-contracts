@@ -1,5 +1,5 @@
 all:
-	solc --combined-json "abi,bin" contracts/*.sol > ./dist/combined.json
+	solc --combined-json "abi,bin" contracts/*.sol > ./dist/contracts.json
 
 clean:
 	rm ./dist/*

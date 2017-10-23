@@ -90,12 +90,11 @@ contract Sale {
         PurchasedTokens(msg.sender, purchaseAmount);
     }
 
-    // purposefully leaving this as not onlyOwner so that anyone can call it since it was advertised approach to leftover tokens
     function lockUnsoldTokens(address _unsoldTokensWallet)
         saleEnded
         setupComplete
+        onlyOwner
     {
-        //unsoldTokensWallet
         Disbursement disbursement = new Disbursement(
             _unsoldTokensWallet,
             1*365*24*60*60,

@@ -10,7 +10,7 @@ contract Sale {
 
     // EVENTS
 
-    event TransferredVestedTokens(address indexed filter, address indexed vault, uint tokens);
+    event TransferredTimelockedTokens(address beneficiary, address disbursement,uint beneficiaryTokens);
     event PurchasedTokens(address indexed purchaser, uint amount);
     event LockedUnsoldTokens(uint numTokensLocked, address disburser);
 
@@ -31,12 +31,13 @@ contract Sale {
     uint public presale_price_in_wei = 216685; //wei per 10**-9 of LEV!
     uint public price_in_wei = 333333; //wei per 10**-9 of a LEV!
 
-    address[] public filters;
+    //address[] public filters;
 
     uint public privateAllocated = 0;
     bool public setupCompleteFlag = false;
     bool public emergencyFlag = false;
 
+    address[] public disbursements;
     mapping(address => uint) public whitelistRegistrants;
 
     // PUBLIC FUNCTIONS
@@ -111,7 +112,44 @@ contract Sale {
 
     // OWNER-ONLY FUNCTIONS
 
-    function distributeTimeLockedTokens(
+    function distributeTimelockedTokens(
+        address[] _beneficiaries,
+        uint[] _beneficiariesTokens,
+        uint[] _timelockStarts,
+        uint[] _periods
+    ) 
+        public
+        onlyOwner
+        saleNotEnded
+    { 
+        assert(!setupCompleteFlag);
+        assert(_beneficiariesTokens.length < 11);
+        assert(_beneficiaries.length == _beneficiariesTokens.length);
+        assert(_beneficiariesTokens.length == _timelockStarts.length);
+        assert(_timelockStarts.length == _periods.length);
+
+        for(uint i = 0; i < _beneficiaries.length; i++) {
+            require(privateAllocated + _beneficiariesTokens[i] <= MAX_PRIVATE);
+            privateAllocated += _beneficiariesTokens[i];
+            address beneficiary = _beneficiaries[i];
+            uint beneficiaryTokens = _beneficiariesTokens[i];
+
+            Disbursement disbursement = new Disbursement(
+                beneficiary,
+                _periods[i],
+                _timelockStarts[i]
+            );
+
+            disbursement.setup(token);
+            token.transfer(disbursement, beneficiaryTokens);
+            disbursements.push(disbursement);
+            TransferredTimelockedTokens(beneficiary, disbursement, beneficiaryTokens);
+        }
+
+        assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
+    }
+
+    /*function distributeTimeLockedTokens(
         address[] _beneficiaries,
         uint[] _beneficiaryTokens,
         uint[] _timelocks
@@ -124,8 +162,8 @@ contract Sale {
         assert(_beneficiaryTokens.length < 11 && _timelocks.length < 11);
         assert(_beneficiaries.length == _beneficiaryTokens.length);
 
-        /* Total number of tokens to be disbursed for a given tranch. Used when
-           tokens are transferred to disbursement contracts. */
+        // Total number of tokens to be disbursed for a given tranch. Used when
+        //   tokens are transferred to disbursement contracts. 
         uint tokensPerTranch = 0;
         // Alias of founderTimelocks.length for legibility
         uint tranches = _timelocks.length;
@@ -140,17 +178,17 @@ contract Sale {
             tokensPerTranch = tokensPerTranch + beneficiaryTokensPerTranch[i];
         }
 
-        /* Deploy disbursement and filter contract pairs, initialize both and store
-           filter addresses in filters array. Finally, transfer tokensPerTranch to
-           disbursement contracts. */
+        // Deploy disbursement and filter contract pairs, initialize both and store
+        //   filter addresses in filters array. Finally, transfer tokensPerTranch to
+        //   disbursement contracts. 
         for(uint j = 0; j < tranches; j++) {
             Filter filter = new Filter(_beneficiaries, beneficiaryTokensPerTranch);
             filters.push(filter);
             Disbursement vault = new Disbursement(filter, 1, _timelocks[j]);
             // Give the disbursement contract the address of the token it disburses.
             vault.setup(token);             
-            /* Give the filter contract the address of the disbursement contract
-               it access controls */
+            // Give the filter contract the address of the disbursement contract
+            //  it access controls
             filter.setup(vault);             
             // Transfer to the vault the tokens it is to disburse
             assert(token.transfer(vault, tokensPerTranch));
@@ -158,13 +196,14 @@ contract Sale {
         }
 
         assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
-    }
+    }*/
 
     function distributePresaleTokens(address[] _buyers, uint[] _amounts)
         public
         onlyOwner
         saleNotEnded
     {
+        assert(!setupCompleteFlag);
         require(_buyers.length < 11);
         require(_buyers.length == _amounts.length);
 
@@ -204,6 +243,8 @@ contract Sale {
         public
         onlyOwner
     {
+        require(wallet!=0);
+        require(privateAllocated!=0);  
         setupCompleteFlag = true;
     }
 

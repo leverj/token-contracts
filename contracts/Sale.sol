@@ -67,14 +67,23 @@ contract Sale {
         notInEmergency
         saleInProgress
     {
+        require(whitelistRegistrants[msg.sender] > 0 );
+        uint tempWhitelistAmount = whitelistRegistrants[msg.sender];
+
         /* Calculate whether any of the msg.value needs to be returned to
            the sender. The purchaseAmount is the actual number of tokens which
            will be purchased. */
         uint purchaseAmount = msg.value / price_in_wei; 
         uint excessAmount = msg.value % price_in_wei;
 
-        require(whitelistRegistrants[msg.sender] >= purchaseAmount );
+        if(purchaseAmount > whitelistRegistrants[msg.sender]){
+            uint extra = purchaseAmount - whitelistRegistrants[msg.sender];
+            purchaseAmount = whitelistRegistrants[msg.sender];
+            excessAmount += extra*price_in_wei;
+        }
+
         whitelistRegistrants[msg.sender] -= purchaseAmount;
+        assert(whitelistRegistrants[msg.sender] < tempWhitelistAmount);
 
         // Cannot purchase more tokens than this contract has available to sell
         require(purchaseAmount <= token.balanceOf(this));
@@ -106,6 +115,7 @@ contract Sale {
 
         disbursement.setup(token);
         uint amountToLock = token.balanceOf(this);
+        disbursements.push(disbursement);
         token.transfer(disbursement, amountToLock);
         LockedUnsoldTokens(amountToLock, disbursement);
     }
@@ -149,55 +159,6 @@ contract Sale {
         assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
     }
 
-    /*function distributeTimeLockedTokens(
-        address[] _beneficiaries,
-        uint[] _beneficiaryTokens,
-        uint[] _timelocks
-    ) 
-        public
-        onlyOwner
-        saleNotEnded
-    {   
-        assert(!setupCompleteFlag);
-        assert(_beneficiaryTokens.length < 11 && _timelocks.length < 11);
-        assert(_beneficiaries.length == _beneficiaryTokens.length);
-
-        // Total number of tokens to be disbursed for a given tranch. Used when
-        //   tokens are transferred to disbursement contracts. 
-        uint tokensPerTranch = 0;
-        // Alias of founderTimelocks.length for legibility
-        uint tranches = _timelocks.length;
-        // The number of tokens which may be withdrawn per founder for each tranch
-        uint[] memory beneficiaryTokensPerTranch = new uint[](_beneficiaryTokens.length);
-
-        // Compute foundersTokensPerTranch and tokensPerTranch
-        for(uint i = 0; i < _beneficiaryTokens.length; i++) {
-            require(privateAllocated + _beneficiaryTokens[i] <= MAX_PRIVATE);
-            privateAllocated += _beneficiaryTokens[i];
-            beneficiaryTokensPerTranch[i] = _beneficiaryTokens[i]/tranches;
-            tokensPerTranch = tokensPerTranch + beneficiaryTokensPerTranch[i];
-        }
-
-        // Deploy disbursement and filter contract pairs, initialize both and store
-        //   filter addresses in filters array. Finally, transfer tokensPerTranch to
-        //   disbursement contracts. 
-        for(uint j = 0; j < tranches; j++) {
-            Filter filter = new Filter(_beneficiaries, beneficiaryTokensPerTranch);
-            filters.push(filter);
-            Disbursement vault = new Disbursement(filter, 1, _timelocks[j]);
-            // Give the disbursement contract the address of the token it disburses.
-            vault.setup(token);             
-            // Give the filter contract the address of the disbursement contract
-            //  it access controls
-            filter.setup(vault);             
-            // Transfer to the vault the tokens it is to disburse
-            assert(token.transfer(vault, tokensPerTranch));
-            TransferredVestedTokens(filter, vault, tokensPerTranch);
-        }
-
-        assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
-    }*/
-
     function distributePresaleTokens(address[] _buyers, uint[] _amounts)
         public
         onlyOwner
@@ -213,6 +174,8 @@ contract Sale {
             privateAllocated += _amounts[i];
             PurchasedTokens(_buyers[i], _amounts[i]);
         }
+
+        assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
     }
 
     function removeTransferLock()

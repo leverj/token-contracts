@@ -114,8 +114,8 @@ describe('sale tests', ()=>{
 			const tokens = [10000000000000, 5000000000000000, 5000000000000000];
 			const tooMuchTokens = [expectedMAX_PRIVATE, 5000];
 			const timeNow = Math.floor(Date.now() / 1000);
-			const timelocks = [timeNow+1, timeNow+1, timeNow + 144000];
-			const durations = [1000, 5000, 1000000];
+			const timelocks = [timeNow, timeNow+1, timeNow + 144000];
+			const durations = [1, 5000, 1000000];
 			const badArray = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];
 			const anotherBadArray = [0,1,2,3,4];
 

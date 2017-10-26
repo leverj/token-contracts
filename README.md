@@ -8,6 +8,8 @@ Compilation:
 ```
 make all
 ```
+All compilation outputs will be in the `dist` folder in a single `contracts.json` file
+
 To run the sale tests:
 ```
 mocha tests/Sale.js
@@ -16,5 +18,7 @@ To run tests for all other contracts:
 ```
 mocha tests/<contract name>.js
 ```
-
-TODO: update instructions to use Mo's test node instatiation for faster and more automatic setup
+To clean up compilation folder:
+```
+make clean
+```

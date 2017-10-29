@@ -1,0 +1,3 @@
+#!/bin/bash
+
+nohup geth --networkid 5766 --identity "jsons_dev_node" --rpc --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --nodiscover --mine --minerthreads 1 --preload automine.js --gasprice "1" --unlock 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 --password .pass --verbosity 6 1>~/.ethereum/log 2>&1 &

@@ -1,0 +1,4 @@
+rm -rf ~/.ethereum
+geth init genesis.json
+cp keystore_backup/* ~/.ethereum/keystore/
+

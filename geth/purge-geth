@@ -1,0 +1,5 @@
+#!/bin/bash
+
+killall geth
+rm -rf ~/.etheruem
+rm -rf ~/.ethash

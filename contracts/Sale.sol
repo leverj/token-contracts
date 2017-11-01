@@ -3,7 +3,6 @@ pragma solidity ^0.4.11;
 
 import "./HumanStandardToken.sol";
 import "./Disbursement.sol";
-import "./Filter.sol";
 import "./SafeMath.sol";
 
 contract Sale {

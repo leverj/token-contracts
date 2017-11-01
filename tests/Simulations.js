@@ -10,6 +10,7 @@ describe('do a full simulation of a sale', async ()=>{
 
 	var testSale2;
 	var owner = web3.eth.accounts[0];
+	var whitelistAdmin = web3.eth.accounts[0];
 	var freezeBlock = web3.eth.blockNumber + 25;
 	var startBlock = freezeBlock + 10;
 	var endBlock = startBlock + 50;	
@@ -31,7 +32,7 @@ describe('do a full simulation of a sale', async ()=>{
 				console.log("freeze: " + freezeBlock);
 				console.log("start: " + startBlock);
 				console.log("end: " + endBlock);
-				testSale2 = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
+				testSale2 = await sale.createSale(owner, freezeBlock, startBlock, endBlock, whitelistAdmin);
 				let actualOwner =  testSale2.owner();
 				let actualFreezeBlock =  testSale2.freezeBlock();
 				let actualStartBlock =  testSale2.startBlock();

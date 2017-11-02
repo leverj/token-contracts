@@ -9,10 +9,11 @@ var web3            			= new Web3(new Web3.providers.HttpProvider('http://localh
 describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AND wallet', async ()=>{
 
 	var testSale;
-	var owner = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6"; //web3.eth.accounts[0];
-	var freezeBlock = 1143500;//web3.eth.blockNumber + 15;
-	var startBlock = 1143510;//freezeBlock + 2;
-	var endBlock = 1167510//startBlock + 10000;	
+	var owner = web3.eth.accounts[0];
+	var whitelistAdmin = web3.eth.accounts[0];
+	var freezeBlock = web3.eth.blockNumber + 15;
+	var startBlock = freezeBlock + 2;
+	var endBlock = startBlock + 10000;	
 
 	describe('sale setup', async ()=>{
 
@@ -31,7 +32,7 @@ describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AN
 				console.log("freeze: " + freezeBlock);
 				console.log("start: " + startBlock);
 				console.log("end: " + endBlock);
-				testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
+				testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock, whitelistAdmin);
 				let actualOwner =  testSale.owner();
 				let actualFreezeBlock =  testSale.freezeBlock();
 				let actualStartBlock =  testSale.startBlock();

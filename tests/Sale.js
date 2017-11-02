@@ -15,6 +15,7 @@ describe('sale tests', ()=>{
 
 			var testSale;
 			var owner = web3.eth.accounts[0];
+			var whitelistAdmin = web3.eth.accounts[1];
 			var freezeBlock = 4471830;
 			var startBlock = 4483800;
 			var endBlock = 4656150;
@@ -32,7 +33,7 @@ describe('sale tests', ()=>{
 		describe('creation of sale contract with LEV sale parameters', () => {
 
 			it('sale should have the correct parameters saved', async () => {
-				testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
+				testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock, whitelistAdmin);
 
 				let actualOwner =  testSale.owner();
 				let actualFreezeBlock =  testSale.freezeBlock();
@@ -98,6 +99,7 @@ describe('sale tests', ()=>{
 
 			it('should not let even the sale owner set the setupcomplete flag if any private allocations have not been set', async () => {
 				const privateAllocations = testSale.privateAllocated();
+
 				assert(parseInt(JSON.parse(privateAllocations)) === 0, 'otherwise this test cannot proceed since setSetupComplete call will be allowed');
 				const existingFlag = testSale.setupCompleteFlag();
 				assert(JSON.parse(existingFlag) === false, 'this test cannot be ran if the flag is already set to true');
@@ -266,6 +268,7 @@ describe('sale tests', ()=>{
 		var saleFrozen = false;
 		var saleStarted = false;
 		var saleEnded = false;
+		var whitelistAdmin1;
 
 		var testSale1;
 		var owner1; //= web3.eth.accounts[0];
@@ -287,6 +290,7 @@ describe('sale tests', ()=>{
 
 			it('sale should have the correct parameters saved', async () => {
 				owner1 = web3.eth.accounts[0];
+				whitelistAdmin1 = web3.eth.accounts[1];
 				freezeBlock1 = web3.eth.blockNumber + 60;
 				startBlock1 = freezeBlock1 + 20;
 				endBlock1 = startBlock1 + 40;
@@ -294,7 +298,7 @@ describe('sale tests', ()=>{
 				console.log("sale freeze block: " + freezeBlock1);
 				console.log("sale start block: " + startBlock1);
 				console.log("sale end block: " + endBlock1);
-				testSale1 = await sale.createSale(owner1, freezeBlock1, startBlock1, endBlock1);
+				testSale1 = await sale.createSale(owner1, freezeBlock1, startBlock1, endBlock1,whitelistAdmin1);
 				let actualOwner =  testSale1.owner();
 				let actualFreezeBlock =  testSale1.freezeBlock();
 				let actualStartBlock =  testSale1.startBlock();
@@ -594,7 +598,7 @@ describe('sale tests', ()=>{
 			}
 
 			it('whitelist entry should NOT be processed if called by a non-owner', async () => {
-				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale1.address, addresses, amounts);
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[2], testSale1.address, addresses, amounts);
 
 				for(var i = 0; i < addresses.length; i++){
 					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);	
@@ -604,7 +608,7 @@ describe('sale tests', ()=>{
 			}).timeout(3000000);
 
 			it('whitelist entry should be processed without failure', async () => {
-				let txHash = await sale.addWhitelist(testSale1.address, addresses, amounts);
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale1.address, addresses, amounts);
 				for(var i = 0; i < addresses.length; i++){
 					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);
 					assert(JSON.parse(whitelistedAmount) === amounts[i], 'this address amount was not set');
@@ -659,6 +663,7 @@ describe('sale tests', ()=>{
 
 			var testSale;
 			var owner = web3.eth.accounts[0];
+			var whitelistAdmin = web3.eth.accounts[0];
 			var freezeBlock = 4500082;
 			var startBlock = freezeBlock + 10000;
 			var endBlock = startBlock + 170000;
@@ -676,7 +681,7 @@ describe('sale tests', ()=>{
 			    const expectedEmergencyFlag = false;
 
 				it('sale should have the correct parameters saved', async () => {
-					testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
+					testSale = await sale.createSale(owner, freezeBlock, startBlock, endBlock, whitelistAdmin);
 					let actualOwner =  testSale.owner();
 					let actualFreezeBlock =  testSale.freezeBlock();
 					let actualStartBlock =  testSale.startBlock();

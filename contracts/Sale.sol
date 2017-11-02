@@ -3,7 +3,6 @@ pragma solidity ^0.4.11;
 
 import "./HumanStandardToken.sol";
 import "./Disbursement.sol";
-import "./Filter.sol";
 import "./SafeMath.sol";
 
 contract Sale {
@@ -23,6 +22,7 @@ contract Sale {
     string public constant SYMBOL = "LEV";
 
     address public owner;
+    address public whitelistAdmin;
     address public wallet;
     HumanStandardToken public token;
     uint public freezeBlock;
@@ -46,11 +46,13 @@ contract Sale {
         address _owner,
         uint _freezeBlock,
         uint _startBlock,
-        uint _endBlock)
+        uint _endBlock,
+        address _whitelistAdmin)
         public 
         checkBlockNumberInputs(_freezeBlock, _startBlock, _endBlock)
     {
         owner = _owner;
+        whitelistAdmin = _whitelistAdmin;
         token = new HumanStandardToken(TOTAL_SUPPLY, NAME, DECIMALS, SYMBOL, address(this));
         freezeBlock = _freezeBlock;
         startBlock = _startBlock;
@@ -226,6 +228,14 @@ contract Sale {
         owner = _newOwner;
     }
 
+    function changeWhitelistAdmin(address _newAdmin)
+        public
+        onlyOwner
+    {
+        require(_newAdmin != 0);
+        whitelistAdmin = _newAdmin;
+    }
+
     function changePrice(uint _newPrice)
         public
         onlyOwner
@@ -254,7 +264,7 @@ contract Sale {
     
     function addWhitelist(address[] _purchaser, uint[] _amount)
         public
-        onlyOwner
+        onlyWhitelistAdmin
         saleNotEnded
     {
         assert(_purchaser.length < 11 );
@@ -280,6 +290,12 @@ contract Sale {
         require(msg.sender == owner);
         _;
     }
+
+    modifier onlyWhitelistAdmin {
+        require(msg.sender == owner || msg.sender == whitelistAdmin);
+        _;
+    }
+
 
     modifier notFrozen {
         require(block.number < freezeBlock);

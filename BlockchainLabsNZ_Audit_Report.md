@@ -6,7 +6,7 @@ This audit report was undertaken by BlockchainLabs.nz for the purpose of providi
 Solidity contracts were sourced from the public Github repo [leverj/token-contracts](https://github.com/leverj/token-contracts) prior to commit [667f838a86cb8df57de217f3ed5fbd9bbf0a2d4e](https://github.com/leverj/token-contracts/tree/667f838a86cb8df57de217f3ed5fbd9bbf0a2d4e) - we would encourage all community members and token holders to make their own assessment of the contracts.
 
 ## Scope
-All Solidity code contained in [/contracts](https://github.com/ElKornacio/contracts-early/tree/master/contracts) was considered in scope along with the tests contained in [/test](https://github.com/ElKornacio/contracts-early/tree/master/test) as a basis for static and dynamic analysis.
+All Solidity code contained in [/contracts](https://github.com/leverj/token-contracts/tree/667f838a86cb8df57de217f3ed5fbd9bbf0a2d4e) was considered in scope along with the tests contained in [/test](https://github.com/leverj/token-sale/tree/master/test) as a basis for static and dynamic analysis.
 
 ## Focus Areas
 The audit report is focused on the following key areas - though this is not an exhaustive list.
@@ -43,7 +43,7 @@ The audit report is focused on the following key areas - though this is not an e
 - **Add a fallback function for non tech investors** -  Consider adding a fallback function so just sending eth to the contract would be enough to purchase tokens ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/7)
   - [ ] Fixed
 - **Measure time milestones with timestamps, not block height** -  The sale has 3 milestones `freezeBlock`, `startBlock`, and `endBlock`. ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/6)
-  - [ ] Fixed 
+  - [ ] Fixed
 - **Use the same version of Solidity for each contract** - Both versions `^0.4.11`, and `^0.4.8` are used in the contracts ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/5)
   - [ ] Fixed
 - **Consistent formatting** -  Minor formatting inconsistencies to be fixed on [#L13](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L13]), [#L79](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L79) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/3)

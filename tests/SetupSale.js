@@ -9,11 +9,11 @@ var web3            			= new Web3(new Web3.providers.HttpProvider('http://localh
 describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AND wallet', async ()=>{
 
 	var testSale;
-	var owner = web3.eth.accounts[0];
-	var whitelistAdmin = web3.eth.accounts[0];
-	var freezeBlock = web3.eth.blockNumber + 15;
-	var startBlock = freezeBlock + 2;
-	var endBlock = startBlock + 10000;	
+	var owner = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
+	var whitelistAdmin = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
+	var freezeBlock = 1184632;
+	var startBlock = 1185632;
+	var endBlock = 1186632;	
 
 	describe('sale setup', async ()=>{
 
@@ -119,24 +119,24 @@ describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AN
 			}).timeout(3000000);
 		}).timeout(3000000);
 
+		describe('add whitelist entries', () => {
+			let addresses = [];
+			let amounts = [];
 
-		/*describe('add whitelist entries', () => {
-			let addresses = ["0xe12FA1cc342923d23dCcDbF093d2D7ac6BC65a8a",
-						 "0xFbafa4678C5997B745A09CD123504ad95C2d812b",
-						 "0x81Be951B158ACc47b8D2503f90FE19015029BC15",
-						 "0xfE26a58582727149F23675b143585e11fFD43C2F"]
-			let amounts = [50000000000000000, 50000000000000000, 50000000000000000, 50000000000000000];
+			for(var i = 10; i < web3.eth.accounts.length; i++){
+				addresses.push(web3.eth.accounts[i]);
+				amounts.push(150000000000000000);
+			}
 
 			it('whitelist entry should be processed without failure', async () => {
-				let txHash = await sale.addWhitelist(testSale.address, addresses, amounts);
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale1.address, addresses, amounts);
 				for(var i = 0; i < addresses.length; i++){
-					let whitelistedAmount = await testSale.whitelistRegistrants(addresses[i]);
+					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);
 					assert(JSON.parse(whitelistedAmount) === amounts[i], 'this address amount was not set');
 				}
 			}).timeout(3000000);
 
-		}).timeout(3000000);*/
-
+		}).timeout(3000000);
 
 		describe('mark setup complete', ()=>{
 

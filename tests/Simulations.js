@@ -346,7 +346,8 @@ describe('do a full simulation of a sale', async ()=>{
 				let token = await HumanStandardToken.at(tokenAddress);
 				let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[randomBuyerIndex]);
 				var weiToSend = Math.floor((Math.random() * 200000000000000000000) + 1000000000000000000);
-				
+				let newSaleBalance = JSON.parse(token.balanceOf(testSale2.address));
+
 				if(newSaleBalance < weiToTokens(weiToSend - 2000000)){
 					//since its close to the end, buy out the rest and bounce
 					var txHash2 = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[randomBuyerIndex], (JSON.parse(token.balanceOf(testSale2.address))*333333)+2400000);
@@ -365,10 +366,10 @@ describe('do a full simulation of a sale', async ()=>{
 				console.log('wei sent:' + weiToSend);
 				console.log('new token balance: ' + buyerBalanceAfter);
 				assert(JSON.parse(buyerBalanceBefore) != JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
-				let newSaleBalance = JSON.parse(token.balanceOf(testSale2.address));	
+				newSaleBalance = JSON.parse(token.balanceOf(testSale2.address));	
 			}
 
-		}).timeout(300000);
+		}).timeout(30000000);
 
 		it('should not let you buy more than whats availabe/sold out', async ()=>{
 			let tokenAddress = await testSale2.token();
@@ -393,7 +394,7 @@ describe('do a full simulation of a sale', async ()=>{
 			let txHash2 = await sale.emergencyToggle(testSale2.address); //lets turn it back off for remaining tests
 		}).timeout(300000);
 
-	}).timeout(3000000);
+	}).timeout(300000000);
 
 	describe('sale end', async()=>{
 

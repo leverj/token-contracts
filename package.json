@@ -7,8 +7,9 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cd contracts && solc --combined-json abi,bin *.sol > ../dist/contracts.json"
+    "test": "mocha tests/*",
+    "build": "cd contracts && solc --combined-json abi,bin *.sol > ../dist/contracts.json",
+    "solcover": "./node_modules/.bin/solidity-coverage"
   },
   "repository": {
     "type": "git",

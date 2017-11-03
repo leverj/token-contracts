@@ -9,11 +9,27 @@ var web3            			= new Web3(new Web3.providers.HttpProvider('http://localh
 describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AND wallet', async ()=>{
 
 	var testSale;
-	var owner = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
-	var whitelistAdmin = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
-	var freezeBlock = 1184632;
-	var startBlock = 1185632;
-	var endBlock = 1186632;	
+
+	// testnet
+	//var owner = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
+	//var whitelistAdmin = "0x4552971161afaFDb93BfDAe659cc4a56d607a7d6";
+	//var freezeBlock = 1186345;
+	//var startBlock = 1187345;
+	//var endBlock = 1188345;	
+
+	// mainnet
+	var owner = '0x036dD047F4e49E20c4F304B061eB14b12d3aE83f';
+	var whitelistAdmin = '0x036dD047F4e49E20c4F304B061eB14b12d3aE83f';
+	var freezeBlock = 4490904;
+	var startBlock = 4491104;
+	var endBlock = 4688045;	
+
+	// localhost
+	//var owner = web3.eth.accounts[0];
+	//var whitelistAdmin = web3.eth.accounts[0];
+	//var freezeBlock = web3.eth.blockNumber + 10;
+	//var startBlock = freezeBlock + 20;
+	//var endBlock = startBlock + 50;	
 
 	describe('sale setup', async ()=>{
 
@@ -129,9 +145,9 @@ describe('setup a sale to test the UI with with web3.eth.accounts[0] as owner AN
 			}
 
 			it('whitelist entry should be processed without failure', async () => {
-				let txHash = await sale.addWhitelistAs(web3.eth.accounts[1], testSale1.address, addresses, amounts);
+				let txHash = await sale.addWhitelistAs(web3.eth.accounts[0], testSale.address, addresses, amounts);
 				for(var i = 0; i < addresses.length; i++){
-					let whitelistedAmount = await testSale1.whitelistRegistrants(addresses[i]);
+					let whitelistedAmount = await testSale.whitelistRegistrants(addresses[i]);
 					assert(JSON.parse(whitelistedAmount) === amounts[i], 'this address amount was not set');
 				}
 			}).timeout(3000000);

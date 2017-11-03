@@ -1,5 +1,5 @@
 pragma solidity ^0.4.11;
-
+import "./SafeMath.sol";
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution
 /// @author Stefan George - <stefan@gnosis.pm>
@@ -141,7 +141,7 @@ contract MultiSigWallet {
         onlyWallet
         ownerDoesNotExist(owner)
         notNull(owner)
-        validRequirement(owners.length + 1, required)
+        validRequirement(SafeMath.add(owners.length, 1), required)
     {
         isOwner[owner] = true;
         owners.push(owner);
@@ -158,10 +158,10 @@ contract MultiSigWallet {
         isOwner[owner] = false;
         for (uint i=0; i<owners.length - 1; i++)
             if (owners[i] == owner) {
-                owners[i] = owners[owners.length - 1];
+                owners[i] = owners[SafeMath.sub(owners.length, 1)];
                 break;
             }
-        owners.length -= 1;
+        owners.length = SafeMath.sub(owners.length, 1);
         if (required > owners.length)
             changeRequirement(owners.length);
         OwnerRemoval(owner);
@@ -267,7 +267,7 @@ contract MultiSigWallet {
         uint count = 0;
         for (uint i=0; i<owners.length; i++) {
             if (confirmations[transactionId][owners[i]])
-                count += 1;
+                count = SafeMath.add(count, 1);
             if (count == required)
                 return true;
         }
@@ -293,7 +293,7 @@ contract MultiSigWallet {
             data: data,
             executed: false
         });
-        transactionCount += 1;
+        transactionCount = SafeMath.add(transactionCount, 1);
         Submission(transactionId);
     }
 
@@ -310,7 +310,7 @@ contract MultiSigWallet {
     {
         for (uint i=0; i<owners.length; i++)
             if (confirmations[transactionId][owners[i]])
-                count += 1;
+                count = SafeMath.add(count, 1);
     }
 
     /// @dev Returns total number of transactions after filers are applied
@@ -325,7 +325,7 @@ contract MultiSigWallet {
         for (uint i=0; i<transactionCount; i++)
             if (   pending && !transactions[i].executed
                 || executed && transactions[i].executed)
-                count += 1;
+                count = SafeMath.add(count, 1);
     }
 
     /// @dev Returns list of owners
@@ -352,7 +352,7 @@ contract MultiSigWallet {
         for (i=0; i<owners.length; i++)
             if (confirmations[transactionId][owners[i]]) {
                 confirmationsTemp[count] = owners[i];
-                count += 1;
+                count = SafeMath.add(count, 1);
             }
         _confirmations = new address[](count);
         for (i=0; i<count; i++)
@@ -378,10 +378,10 @@ contract MultiSigWallet {
                 || executed && transactions[i].executed)
             {
                 transactionIdsTemp[count] = i;
-                count += 1;
+                count = SafeMath.add(count, 1);
             }
         _transactionIds = new uint[](to - from);
         for (i=from; i<to; i++)
-            _transactionIds[i - from] = transactionIdsTemp[i];
+            _transactionIds[SafeMath.sub(i, from)] = transactionIdsTemp[i];
     }
 }

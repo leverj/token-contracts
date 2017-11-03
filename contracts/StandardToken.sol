@@ -9,6 +9,7 @@ Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.8;
 
 import "./Token.sol";
+import "./SafeMath.sol";
 
 contract StandardToken is Token {
 
@@ -22,8 +23,8 @@ contract StandardToken is Token {
         //Replace the if with this one instead.
         //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
     	require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
+        balances[_to] = SafeMath.add(balances[_to],_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -36,9 +37,9 @@ contract StandardToken is Token {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
 	    require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+        balances[_to] = SafeMath.add(balances[_to], _value);
+        balances[_from] = SafeMath.sub(balances[_from], _value);
+        allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
         Transfer(_from, _to, _value);
         return true;
     }
@@ -65,5 +66,5 @@ contract StandardToken is Token {
     {
         require(msg.sender == sale || transfersAllowed);
         _;
-    }
+    }   
 }

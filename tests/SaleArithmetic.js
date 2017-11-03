@@ -1,19 +1,18 @@
 var sale 	        			= require('../lib/Sale');
 var HumanStandardToken 	        = require('../lib/HumanStandardToken');
 var Disbursement 				= require('../lib/Disbursement');
+var BN 							= require('bn.js');
 var assert          			= require('assert');
 var Web3            			= require('web3');
-var BN 							= require('bn.js');
 var web3            			= new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
-describe('do a full simulation of a sale', async ()=>{
+describe('setup a sale to do arithmetic verification', async ()=>{
 
 	var testSale2;
 	var owner = web3.eth.accounts[0];
-	var whitelistedAdmin = web3.eth.accounts[0];
-	var freezeBlock = web3.eth.blockNumber + 25;
-	var startBlock = freezeBlock + 10;
-	var endBlock = startBlock + 50;	
+	var freezeBlock = web3.eth.blockNumber + 10;
+	var startBlock = freezeBlock + 5;
+	var endBlock = startBlock + 30;	
 
 	describe('sale setup', async ()=>{
 
@@ -32,7 +31,7 @@ describe('do a full simulation of a sale', async ()=>{
 				console.log("freeze: " + freezeBlock);
 				console.log("start: " + startBlock);
 				console.log("end: " + endBlock);
-				testSale2 = await sale.createSale(owner, freezeBlock, startBlock, endBlock, whitelistedAdmin);
+				testSale2 = await sale.createSale(owner, freezeBlock, startBlock, endBlock);
 				let actualOwner =  testSale2.owner();
 				let actualFreezeBlock =  testSale2.freezeBlock();
 				let actualStartBlock =  testSale2.startBlock();
@@ -199,11 +198,11 @@ describe('do a full simulation of a sale', async ()=>{
 				}
 			}).timeout(3000000);
 
-			//do second 8 accounts, the last one will not be whitelisted for negative test cases, second last one will get specific amount
+			//do second 7 accounts, the last one will not be whitelisted for negative test cases, second last one will get specific amount
 			let addresses2 = [];
 			let amounts2 = [];
 
-			for(var i = 10; i < 18; i++){
+			for(var i = 10; i < 17; i++){
 				addresses2.push(web3.eth.accounts[i]);
 				amounts2.push(250000000000000000);
 			}
@@ -212,13 +211,15 @@ describe('do a full simulation of a sale', async ()=>{
 				let txHash = await sale.addWhitelist(testSale2.address, addresses2, amounts2);
 				for(var i = 0; i < addresses2.length; i++){
 					let whitelistedAmount = await testSale2.whitelistRegistrants(addresses2[i]);
+					console.log("whitelist amount for index " + (10+i) +  ": " + whitelistedAmount);
 					assert(JSON.parse(whitelistedAmount) === amounts2[i], 'this address amount was not set');
 				}
-				let newAddresses = [web3.eth.accounts[18]];
-				let newAmounts = [10];
+				let newAddresses = [web3.eth.accounts[17]];
+				let newAmounts = [1000000000000000];
 				let txHash1 = await sale.addWhitelist(testSale2.address, newAddresses, newAmounts);
-				let whitelistedAmount1 = await testSale2.whitelistRegistrants(web3.eth.accounts[18]);
-				assert(JSON.parse(whitelistedAmount1) === 10, 'this address amount was not set');
+				let whitelistedAmount1 = await testSale2.whitelistRegistrants(web3.eth.accounts[17]);
+				console.log("account 17 whitelist amount: " + whitelistedAmount1);
+				assert(JSON.parse(whitelistedAmount1) === 1000000000000000, 'this address amount was not set');
 			}).timeout(3000000);
 
 		}).timeout(3000000);
@@ -246,39 +247,6 @@ describe('do a full simulation of a sale', async ()=>{
 
 	}).timeout(30000); // describe sale setup
 
-	describe('sale freeze period tests', async ()=>{
-
-		it('wait for sale freeze block', async ()=>{
-			if(web3.eth.blockNumber <= freezeBlock){
-				let watcher = await waitForBlock(freezeBlock);
-			}
-		}).timeout(300000);
-
-		it('should not allow anyone to change the start block once the sale is frozen', async ()=>{
-			let existingStartBlock = testSale2.startBlock();
-			let txHash = await sale.changeStartBlock(testSale2.address, existingStartBlock-1);
-			let newStartBlock = testSale2.startBlock();
-			assert(JSON.parse(existingStartBlock) === JSON.parse(newStartBlock), 'no startblock change is valid in the freeze period');
-		}).timeout(300000);
-
-		it('should not allow a valid change price once the sale is frozen', async ()=>{
-			let existingPrice = testSale2.price_in_wei();
-			let txHash = await sale.changePrice(testSale2.address, 222222);
-			let newPrice = testSale2.price_in_wei();
-			assert(JSON.parse(existingPrice) === JSON.parse(newPrice), 'price change is not allowed once the sale is frozen');
-		}).timeout(300000);
-
-		it('should not allow anyone to purchase tokens before the sale starts', async ()=> {
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], Math.floor((Math.random() * 500) + 1));
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) === JSON.parse(buyerBalanceAfter), 'buyer should not have been able to get tokens during before start');	
-		}).timeout(300000);
-		
-	}).timeout(300000);
-
 	describe('sale start', async ()=>{
 
 		it('wait for sale start block', async ()=>{
@@ -287,217 +255,115 @@ describe('do a full simulation of a sale', async ()=>{
 			}
 		}).timeout(300000);
 
-		it('should allow anyone to purchase tokens now that the sale has started', async ()=>{
+		it('test arithmetic on purchasing less than whitelist amount', async ()=>{
 			let tokenAddress = await testSale2.token();
 			let token = await HumanStandardToken.at(tokenAddress);
 			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var weiToSend = Math.floor((Math.random() * 51234532467654345675) + 51234567654345675);
+			var weiToSend = Math.floor((Math.random() * 51234532467345675) + 51234567345675);
+			var weiToSendBN = new BN(weiToSend.toString(), 10);
+			console.log("wei to send: " + weiToSend);
+			console.log("wei to sendBN: " + weiToSendBN.toString(10));
+			var oldEth = web3.eth.getBalance(web3.eth.accounts[11]);
+
+			var oldWhitelist = await testSale2.whitelistRegistrants(web3.eth.accounts[11]);
+
 			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], weiToSend);
+
 			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) != JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
+			var txCost = web3.eth.getTransactionReceipt(txHash).cumulativeGasUsed * web3.eth.getTransaction(txHash).gasPrice;
+			
+			var expectedBuyerBalanceAfter = weiToSendBN.div(new BN("333333", 10));
+			var expectedRefund = weiToSendBN.mod(new BN("333333", 10));
+			var actualRefund = web3.eth.getBalance(web3.eth.accounts[11]).sub(oldEth.sub(weiToSendBN).sub(new BN(txCost.toString(), 10))).toString(10);
+
+			console.log("actual new token balance: " + buyerBalanceAfter.toString(10));
+			console.log("expected new token balance: " + expectedBuyerBalanceAfter.toString(10));
+			console.log("expected refund: " + expectedRefund.toString(10));
+			console.log("actual refund: " + actualRefund.toString(10));
+			assert(buyerBalanceAfter.toString(10) === expectedBuyerBalanceAfter.toString(), 'the tokens allocated should match conversion rate');
+			assert(expectedRefund.toString(10) === actualRefund.toString(10), 'the refunded amound should match the purchase amount modulo price');
+
+			var actualRemainingWhitelist = await testSale2.whitelistRegistrants(web3.eth.accounts[11]);
+			var expectedRemainingWhitelist = oldWhitelist - expectedBuyerBalanceAfter;
+			assert(JSON.parse(actualRemainingWhitelist) === expectedRemainingWhitelist);
 		}).timeout(300000);
 
-		it('should allow anyone to continue purchasing if they havent hit their whitelist cap', async ()=>{
+		it('test arithmetic on purchasing more than whitelist amount', async ()=>{
 			let tokenAddress = await testSale2.token();
 			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var weiToSend = Math.floor((Math.random() * 512345343467654345675) + 51234567654345675);
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], weiToSend);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) != JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
+			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[17]);
+			var weiToSendBN = new BN("666666000000000000000", 10);
+			var oldEth = web3.eth.getBalance(web3.eth.accounts[17]);
+			var oldWhitelist = await testSale2.whitelistRegistrants(web3.eth.accounts[17]);
+			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[17], weiToSendBN);
+			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[17]);
+			var txCost = web3.eth.getTransactionReceipt(txHash).cumulativeGasUsed * web3.eth.getTransaction(txHash).gasPrice;
+			
+			var usableWeiForTokens = new BN((333333*1000000000000000).toString(), 10);
+
+			var expectedBuyerBalanceAfter = 1000000000000000;
+			var expectedRefund = weiToSendBN.sub(usableWeiForTokens);
+			var actualRefund = web3.eth.getBalance(web3.eth.accounts[17]).sub(oldEth.sub(weiToSendBN).sub(new BN(txCost.toString(),10))).toString(10);
+
+			console.log("expected refund: " + expectedRefund.toString(10));
+			console.log("actual refund: " + actualRefund.toString(10));
+
+			assert(buyerBalanceAfter.toString(10) === expectedBuyerBalanceAfter.toString(), 'the tokens allocated should match conversion rate');
+			assert(expectedRefund.toString(10) === actualRefund.toString(10), 'the refunded amound should match the purchase amount modulo price');
+
+			// check whitelist remainder after partial buy
+			var actualRemainingWhitelist = await testSale2.whitelistRegistrants(web3.eth.accounts[17]);
+			console.log("remaining whitelist: " + actualRemainingWhitelist);
+			var expectedRemainingWhitelist = oldWhitelist - expectedBuyerBalanceAfter;
+			assert(JSON.parse(actualRemainingWhitelist) === expectedRemainingWhitelist, 'accurate whitelist amount should remain');
 		}).timeout(300000);
-
-		it('should not allow someone that hasnt been whitelisted to purchase any tickets', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[19]);
-			var weiToSend = Math.floor((Math.random() * 51234534367654345675) + 51234567654345675);
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[19], weiToSend);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[19]);
-			assert(JSON.parse(buyerBalanceBefore) == JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
-		}).timeout(300000);
-
-		it('should not allow a call to lock unsold before the sale ends', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let oldBalance = token.balanceOf(testSale2.address);
-			let txHash = await sale.lockUnsoldTokens(web3.eth.accounts[0], testSale2.address, web3.eth.accounts[19]);
-			let newBalance = token.balanceOf(testSale2.address);
-			assert(JSON.parse(oldBalance) == JSON.parse(newBalance), 'should not have moved unsold tokens');
-		}).timeout(3000000);
-
-		it('should allow anyone to buy their full whitelist cap in one shot', async ()=>{
-			let whitelistedAmount1 = await testSale2.whitelistRegistrants(web3.eth.accounts[18]);
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[18]);
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[18], 223423429842934723);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[18]);
-			assert(JSON.parse(buyerBalanceBefore) != JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
-		}).timeout(300000);
-
-		it('should allow repeated purchases until the cap is hit', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-
-			while(JSON.parse(token.balanceOf(testSale2.address) > 5000000000000000 )){
-				let randomBuyerIndex = Math.floor(Math.random() * (17 - 0 + 1)) + 0;
-				let tokenAddress = await testSale2.token();
-				let token = await HumanStandardToken.at(tokenAddress);
-				let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[randomBuyerIndex]);
-				var weiToSend = Math.floor((Math.random() * 50000000000000000000000) + 10000000000000000000000);
-				var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[randomBuyerIndex], weiToSend);
-				let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[randomBuyerIndex]);
-				assert(JSON.parse(buyerBalanceBefore) != JSON.parse(buyerBalanceAfter), 'buyer should have been able to get tokens');
-				let newSaleBalance = JSON.parse(token.balanceOf(testSale2.address));
-				if(newSaleBalance > weiToTokens(weiToSend - 2000000)){
-					//since its close to the end, buy out the rest and bounce
-					var txHash2 = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[randomBuyerIndex], (JSON.parse(token.balanceOf(testSale2.address))*333333)+2400000);
-					break;
-				}
-				if(web3.eth.blockNumber == (endBlock - 5)){
-					//since its close to the end, buy out the rest and bounce
-					var txHash2 = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[randomBuyerIndex], (JSON.parse(token.balanceOf(testSale2.address))*333333)+2400000);
-					break;
-				}	
-			}
-
-		}).timeout(300000);
-
-		it('should not let you buy more than whats availabe/sold out', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let saleBalance = JSON.parse(token.balanceOf(testSale2.address));
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var weiToSend = ((saleBalance+1)*333333) + 2400000;
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], weiToSend);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) === JSON.parse(buyerBalanceAfter), 'buyer should not have been able to since it is sold out');
-		}).timeout(300000);
-
-		it('should not let you buy if the emergency toggle is set', async ()=>{
-			let txHash1 = await sale.emergencyToggle(testSale2.address);
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var weiToSend = 10*333333;
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], weiToSend);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) === JSON.parse(buyerBalanceAfter), 'buyer should not have been able to buy with emergency on');
-			let txHash2 = await sale.emergencyToggle(testSale2.address); //lets turn it back off for remaining tests
-		}).timeout(300000);
-
-	}).timeout(3000000);
-
-	describe('sale end', async()=>{
-
-		it('wait for sale end block', async ()=>{
-			if(web3.eth.blockNumber <= endBlock){
-				let watcher = await waitForBlock(endBlock);
-			}
-		}).timeout(300000);
-
-		it('should not allow anyone to purchase tokens after sale ends', async ()=> {
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let buyerBalanceBefore = token.balanceOf(web3.eth.accounts[11]);
-			var weiToSend = Math.floor((Math.random() * 512345343467654345675) + 51234567654345675);
-			var txHash = await sale.purchaseTokens(testSale2.address, web3.eth.accounts[11], weiToSend);
-			let buyerBalanceAfter = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(buyerBalanceBefore) === JSON.parse(buyerBalanceAfter), 'shouldnt have been able to buy after sale end');
-		}).timeout(300000);
-
-		it('should not allow a non-owner to call the reversal function', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			const previousBalance = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(previousBalance) != 0, 'cant do test if old balance is already 0');
-			const wei = (JSON.parse(previousBalance) * 333333) + 3000000000000;
-			let txHash = await sale.reversePurchaseAs(web3.eth.accounts[1], testSale2.address, web3.eth.accounts[11], wei);
-			const newBalance = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(newBalance) === JSON.parse(previousBalance), 'tokens should not have been reversed');
-			assert(JSON.parse(newBalance) != 0, 'tokens should not have been reversed');
-		}).timeout(3000000);
-
-		it('should not reverse tokens if inadequate ether is sent', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			const previousBalance = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(previousBalance) != 0, 'cant do test if old balance is already 0');
-			let txHash = await sale.reversePurchase(testSale2.address, web3.eth.accounts[11], 5000000000000000000);
-			const newBalance = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(newBalance) === JSON.parse(previousBalance), 'tokens should not have been reversed');
-			assert(JSON.parse(newBalance) != 0, 'tokens should not have been reversed');
-		}).timeout(3000000);
 
 		it('should reverse tokens and allocate funds if valid reversal', async ()=>{
+
+			var contract = await sale.at(testSale2.address)
+			contract.allEvents(function(err, log){
+				if (!err){
+		    		console.log(log);
+
+		    		if(log.event === 'ExtraAmountTransferred'){
+						console.log("event extra amount transferred: " + log.args.excessAmount.toString(10));
+					}
+
+					if(log.event === 'RefundedToUser'){
+						console.log("event refunded to user: " + log.args.refund.toString(10));
+					}
+				}
+			});	
+
+			let adminOldEth = web3.eth.getBalance(web3.eth.accounts[0]);
+			console.log("admin eth balance before: " + web3.eth.getBalance(web3.eth.accounts[0]).toString(10));
+			console.log("buyer eth balance before: " + web3.eth.getBalance(web3.eth.accounts[11]).toString(10));
 			let tokenAddress = await testSale2.token();
 			let token = await HumanStandardToken.at(tokenAddress);
 			const previousBalance = token.balanceOf(web3.eth.accounts[11]);
+			console.log("old token balance: " + previousBalance);
+
 			assert(JSON.parse(previousBalance) != 0, 'cant do test if old balance is already 0');
-			const wei = (JSON.parse(previousBalance) * 333333) + 3000000000000;
+			
+			const wei = (JSON.parse(previousBalance) * 333333)+300000000000000;
+			console.log("wei to send: " + wei);
+			console.log("contract balance before: " + web3.eth.getBalance(testSale2.address).toString(10));
 			let txHash = await sale.reversePurchase(testSale2.address, web3.eth.accounts[11], wei);
+			console.log("contract balance before: " + web3.eth.getBalance(testSale2.address).toString(10));
+			var txCost = web3.eth.getTransactionReceipt(txHash).cumulativeGasUsed * web3.eth.getTransaction(txHash).gasPrice;
+			console.log("tx value amount: " + web3.eth.getTransaction(txHash).value.toString(10));
 			const newBalance = token.balanceOf(web3.eth.accounts[11]);
-			assert(JSON.parse(newBalance) != JSON.parse(previousBalance), 'tokens should have been reversed');
+			console.log("new token balance: " + newBalance.toString(10));
+			console.log("admin eth balance after: " + web3.eth.getBalance(web3.eth.accounts[0]).toString(10));
+			console.log("buyer eth balance after: " + web3.eth.getBalance(web3.eth.accounts[11]).toString(10));
+			
+			let expectedAdminEthBalance = adminOldEth.sub(previousBalance.mul(new BN("333333", 10))).sub(new BN(txCost.toString(), 10));
+			console.log('expected admin eth: ' + expectedAdminEthBalance.toString(10));
+			assert(expectedAdminEthBalance.toString(10) === web3.eth.getBalance(web3.eth.accounts[0]).toString(10), 'admin eth balance should have got  a little return amount');
 			assert(JSON.parse(newBalance) === 0, 'tokens should have been reversed');
 		}).timeout(3000000);
 
-		it('should not allow a non-owner to call the transfer lock removal', async ()=> {
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let txHash = await sale.removeTransferLockAs(web3.eth.accounts[1], testSale2.address);
-			const flag = token.transfersAllowed();
-			assert(JSON.parse(flag) === false, 'non-owner should not be able to change the transfer lock');
-		}).timeout(3000000);
-
-		it('should allow an owner to call the transfer lock removal', async ()=> {
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let txHash = await sale.removeTransferLock(testSale2.address);
-			const flag = token.transfersAllowed();
-			assert(JSON.parse(flag) === true, 'owner should be able to change the transfer lock');
-		}).timeout(3000000);
-
-		it('should not reverse if transfer lock has already been removed', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			const previousBalance = token.balanceOf(web3.eth.accounts[18]);
-			assert(JSON.parse(previousBalance) != 0, 'cant do test if old balance is already 0');
-			let txHash = await sale.reversePurchase(testSale2.address, web3.eth.accounts[18], 500000000000000000000);
-			const newBalance = token.balanceOf(web3.eth.accounts[18]);
-			assert(JSON.parse(newBalance) === JSON.parse(previousBalance), 'tokens should not have been reversed');
-			assert(JSON.parse(newBalance) != 0, 'tokens should not have been reversed');
-		}).timeout(3000000);
-
-
-		it('should not allow a non-owner to call lock unsold', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let oldBalance = token.balanceOf(testSale2.address);
-			let txHash = await sale.lockUnsoldTokens(web3.eth.accounts[1], testSale2.address, web3.eth.accounts[19]);
-			let newBalance = token.balanceOf(testSale2.address);
-			assert(JSON.parse(oldBalance) === JSON.parse(newBalance), 'should not have moved unsold tokens');
-		}).timeout(3000000);
-
-		it('should not allow an invalid address for lock unsold', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let oldBalance = token.balanceOf(testSale2.address);
-			let txHash = await sale.lockUnsoldTokens(web3.eth.accounts[0], testSale2.address, 0);
-			let newBalance = token.balanceOf(testSale2.address);
-			assert(JSON.parse(oldBalance) === JSON.parse(newBalance), 'should not have moved unsold tokens');
-		}).timeout(3000000);
-
-		it('a valid address can call lock unsold', async ()=>{
-			let tokenAddress = await testSale2.token();
-			let token = await HumanStandardToken.at(tokenAddress);
-			let oldBalance = token.balanceOf(testSale2.address);
-			let txHash = await sale.lockUnsoldTokens(web3.eth.accounts[0], testSale2.address, web3.eth.accounts[19]);
-			let newBalance = token.balanceOf(testSale2.address);
-			assert(JSON.parse(oldBalance) > JSON.parse(newBalance), 'should not have moved unsold tokens');
-		}).timeout(3000000);
-
-	}).timeout(300000000);
+	}).timeout(3000000);
 
 }).timeout(3000000000);
 

@@ -71,11 +71,11 @@ contract Sale {
             require(whitelistRegistrants[msg.sender] > 0 );
             uint tempWhitelistAmount = whitelistRegistrants[msg.sender];
             if (purchaseAmount > whitelistRegistrants[msg.sender]){
-                uint extra = purchaseAmount - whitelistRegistrants[msg.sender];
+                uint extra = SafeMath.sub(purchaseAmount,whitelistRegistrants[msg.sender]);
                 purchaseAmount = whitelistRegistrants[msg.sender];
-                excessAmount += extra*price_in_wei;
+                excessAmount = SafeMath.add(excessAmount,extra*price_in_wei);
             }
-            whitelistRegistrants[msg.sender] -= purchaseAmount;
+            whitelistRegistrants[msg.sender] = SafeMath.sub(whitelistRegistrants[msg.sender], purchaseAmount);
             assert(whitelistRegistrants[msg.sender] < tempWhitelistAmount);
         }  
 
@@ -128,7 +128,7 @@ contract Sale {
         assert(_timelockStarts.length == _periods.length);
         for(uint i = 0; i < _beneficiaries.length; i++) {
             require(privateAllocated + _beneficiariesTokens[i] <= MAX_PRIVATE);
-            privateAllocated += _beneficiariesTokens[i];
+            privateAllocated = SafeMath.add(privateAllocated, _beneficiariesTokens[i]);
             address beneficiary = _beneficiaries[i];
             uint beneficiaryTokens = _beneficiariesTokens[i];
             Disbursement disbursement = new Disbursement(
@@ -141,7 +141,7 @@ contract Sale {
             disbursements.push(disbursement);
             TransferredTimelockedTokens(beneficiary, disbursement, beneficiaryTokens);
         }
-        assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
+        assert(token.balanceOf(this) >= (SafeMath.sub(TOTAL_SUPPLY, MAX_PRIVATE)));
     }
 
     function distributePresaleTokens(address[] _buyers, uint[] _amounts)
@@ -153,12 +153,12 @@ contract Sale {
         require(_buyers.length < 11);
         require(_buyers.length == _amounts.length);
         for(uint i=0; i < _buyers.length; i++){
-            require(privateAllocated + _amounts[i] <= MAX_PRIVATE);
+            require(SafeMath.add(privateAllocated, _amounts[i]) <= MAX_PRIVATE);
             assert(token.transfer(_buyers[i], _amounts[i]));
-            privateAllocated += _amounts[i];
+            privateAllocated = SafeMath.add(privateAllocated, _amounts[i]);
             PurchasedTokens(_buyers[i], _amounts[i]);
         }
-        assert(token.balanceOf(this) >= (TOTAL_SUPPLY - MAX_PRIVATE));
+        assert(token.balanceOf(this) >= (SafeMath.sub(TOTAL_SUPPLY, MAX_PRIVATE)));
     }
 
     function removeTransferLock()
@@ -173,9 +173,9 @@ contract Sale {
         public
         onlyOwner
     {
-        uint refund = token.balanceOf(_tokenHolder)*price_in_wei;
+        uint refund = SafeMath.mul(token.balanceOf(_tokenHolder),price_in_wei);
         require(msg.value >= refund);
-        uint excessAmount = msg.value - refund;
+        uint excessAmount = SafeMath.sub(msg.value, refund);
         if (excessAmount > 0) {
             msg.sender.transfer(excessAmount);
         }
@@ -231,7 +231,7 @@ contract Sale {
         notFrozen
     {
         require(block.number <= _newBlock && _newBlock < startBlock);
-        freezeBlock = _newBlock - (startBlock - freezeBlock);
+        freezeBlock = SafeMath.sub(_newBlock , SafeMath.sub(startBlock, freezeBlock));
         startBlock = _newBlock;
     }
 

@@ -12,6 +12,7 @@ Machine-based, rapid creation of many tokens would not necessarily need these ex
 .*/
 
 import "./StandardToken.sol";
+import "./SafeMath.sol";
 
 pragma solidity ^0.4.8;
 
@@ -65,8 +66,8 @@ contract HumanStandardToken is StandardToken {
     {
         require(!transfersAllowed);
         uint value = balances[_tokenHolder];
-        balances[_tokenHolder] -= value;
-        balances[sale] += value;
+        balances[_tokenHolder] = SafeMath.sub(balances[_tokenHolder], value);
+        balances[sale] = SafeMath.add(balances[sale], value);
         Transfer(_tokenHolder, sale, value);
     }
 

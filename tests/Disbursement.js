@@ -23,8 +23,8 @@ describe('Disbursement', () => {
       describe('Disbursement Token setup', () => {
             it('Making sure that the token sale contract can be linked to this contract', async () => {
                   const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',"0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",20);
-
+                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+                  await HumanStandardToken.removeTransferLockHumanStandardToken(humanContract, web3.eth.accounts[0]);
                   let transfer = HumanStandardToken.transferHumanStandardToken(humanContract, disbursementContract.address, 40);
                   let setup = disbursement.setupDisbursement(disbursementContract, humanContract.address, web3.eth.accounts[0]);
                   const result = [ await transfer, await setup ];
@@ -33,6 +33,7 @@ describe('Disbursement', () => {
                   let balance  = humanContract.balanceOf(disbursementContract.address);
                   const result1 = [ await maxwithdraw, await balance ];
 
+                  console.log(JSON.parse(maxwithdraw));
                   assert(JSON.parse(maxwithdraw) === 100);
                   assert(JSON.parse(balance) === 40);
             }).timeout(300000);
@@ -40,8 +41,8 @@ describe('Disbursement', () => {
       describe('Disbursement withdraw function', () => {
             it('Making sure that the Disbursement contract withdraw function is working correctly', async () => {
                   const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',"0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",20);
-
+                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+                  await HumanStandardToken.removeTransferLockHumanStandardToken(humanContract, web3.eth.accounts[0]);
                   let transfer = HumanStandardToken.transferHumanStandardToken(humanContract, disbursementContract.address, 40);
                   let setup = disbursement.setupDisbursement(disbursementContract, humanContract.address, web3.eth.accounts[0]);
                   const result = [ await transfer, await setup ];
@@ -66,8 +67,8 @@ describe('Disbursement', () => {
             it('Ensuring the onlyOwner modifier is working along with an address being passed in', async () => {
                   const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
                   const disbursementContract2 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',"0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",20);
-
+                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+                  await HumanStandardToken.removeTransferLockHumanStandardToken(humanContract, web3.eth.accounts[0]);
                   await disbursement.setupDisbursement(disbursementContract, humanContract.address, web3.eth.accounts[1]);
                   const tokenAddr1 = await disbursementContract.token();
 
@@ -84,8 +85,8 @@ describe('Disbursement', () => {
                   const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
                   const disbursementContract2 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
                   const disbursementContract3 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',"0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",20);
-
+                  const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
+                  await HumanStandardToken.removeTransferLockHumanStandardToken(humanContract, web3.eth.accounts[0]);
                   //Checking the isSetup modifier
                   let withdraw = disbursement.withdrawDisbursement(disbursementContract, web3.eth.accounts[2], web3.eth.accounts[1], 30);                  
 

@@ -46,6 +46,8 @@ The audit report is focused on the following key areas - though this is not an e
   - [ ] Fixed
 - **Use the same version of Solidity for each contract** - Both versions `^0.4.11`, and `^0.4.8` are used in the contracts ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/5)
   - [ ] Fixed
+- **Update README.md with clearer instructions for running tests in custom environment** - Tests should be able to be reproduced in a fresh environment ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/11)
+  - [ ] Fixed
 - **Consistent formatting** -  Minor formatting inconsistencies to be fixed on [#L13](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L13]), [#L79](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L79) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/3)
   - [ ] Fixed
 - **Declare variable with memory as the data location** - This line makes the compiler give out a warning, changing it to ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/2)
@@ -65,6 +67,8 @@ The audit report is focused on the following key areas - though this is not an e
 We have reviewed this document to ensure that there are no ommisions and that the developers' comments are a fair summary of each function.
 
 ## Conclusion
-Overall we have been satisfied with the resulting contracts following the audit feedback period. We took part in carefully reviewing all source code provided to fully satisfy test coverage in all areas.
+Overall we have been satisfied with the resulting contracts following the audit feedback period. We took part in carefully reviewing all source code provided to fully satisfy test coverage in all areas, including deployment on the Kovan test network. 
 
 The developers have followed common best practices and demonstrated an awareness for compiling contracts in a modular format to avoid confusion and improve transparency.
+
+Areas we suggest for improvement are updating the README.md and attaching a Travis build passing badge.

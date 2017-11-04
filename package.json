@@ -24,6 +24,7 @@
   "dependencies": {
     "assert": "^1.4.1",
     "bn.js": "^4.11.8",
+    "csv-parser": "^1.11.0",
     "eslint": "^4.9.0",
     "ethereumjs-tx": "^1.3.3",
     "ethers": "^2.1.2",

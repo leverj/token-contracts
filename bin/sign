@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var prompt = require('prompt');
 var timeLocks = require('../conf/timeLocks');
-var network = require('../conf/rinkeby');	// Change this as needed. Nothing major needs to change.
+var network = require('../conf/mainnet_test');	// Change this as needed. Nothing major needs to change.
 var Wallet = require('ethers').Wallet;
 var fs = require('fs');
 var EthTx = require('ethereumjs-tx');
@@ -10,8 +10,7 @@ var web3 = new Web3();
 var build = require('../dist/contracts');
 var abi = JSON.parse(build.contracts['contracts/Sale.sol:Sale'].abi);
 var Sale = web3.eth.contract(abi).at(network.sale.address);
-
-
+var csv = require('csv-parser');
 
 prompt.start();
 prompt.get({properties: {
@@ -32,11 +31,47 @@ prompt.get({properties: {
 			var encrypted = fs.readFileSync('.keys/' + result.address.toLowerCase() + '.json', 'utf-8');
 			Wallet.fromEncryptedWallet(encrypted, result.password)
 			.then(function (wallet) {
-				var transactions = [];
+				var preconfigTransactions = [];
+				var timelockTransactions = [];
+				var whitelistTransactions = [];
+				var postconfigTransactions = [];
+				var tempNonce = Number(result.nonce);
+
+				// set wallet
+				var tx = network.txparams;
+				tx.nonce = web3.toHex(tempNonce);
+				console.log(web3.toDecimal(tx.nonce));
+				tempNonce++;
+				tx.gasPrice = web3.toHex(tx.gasPrice);
+				tx.gasLimit = web3.toHex(tx.gasLimit);
+				tx.to = network.sale.address;
+				tx.data = Sale.configureWallet.getData(network.wallet);
+				tx.gas = web3.toHex(tx.gasLimit);
+				var Tx = new EthTx(tx);
+				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+				preconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
+
+				// allocate presale
+				var tx = network.txparams;
+				tx.nonce = web3.toHex(tempNonce);
+				console.log(web3.toDecimal(tx.nonce));
+				tempNonce++;
+				tx.gasPrice = web3.toHex(tx.gasPrice);
+				tx.gasLimit = web3.toHex(tx.gasLimit);
+				tx.to = network.sale.address;
+				var beneficiaries =[network.presaleAddress];
+				var amounts = [network.presaleAmount];
+				tx.data = Sale.distributePresaleTokens.getData(beneficiaries, amounts);
+				tx.gas = web3.toHex(tx.gasLimit);
+				var Tx = new EthTx(tx);
+				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+				preconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
+
 				// distribute time locked tokens
 				for (var i = 0 ; i < timeLocks.length; i += network.batchsize) {
 					var tx = network.txparams;
-					tx.nonce = web3.toHex(Number(result.nonce) + i/network.batchsize);
+					tx.nonce = tempNonce;
+					tempNonce++;
 					console.log(web3.toDecimal(tx.nonce));
 					tx.gasPrice = web3.toHex(tx.gasPrice);
 					tx.gasLimit = web3.toHex(tx.gasLimit);
@@ -48,13 +83,76 @@ prompt.get({properties: {
 									timeLocks.map(el => el[3]).slice(i, i + network.batchsize)  // durations
 								)
 					tx.gas = web3.toHex(tx.gasLimit);
-
 					var Tx = new EthTx(tx);
 					Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
-					transactions.push('0x' + Tx.serialize().toString('hex'));
+					timelockTransactions.push('0x' + Tx.serialize().toString('hex'));
 				}
-					fs.writeFileSync('signedTransactions.json', JSON.stringify(transactions, null, 2));
-					resolve();
+
+				// whitelisters
+				var tempCount = 0;
+				var addresses = [];
+				var whitelistAmounts = [];
+				fs.createReadStream('./conf/results-20171103-054519_FINAL.csv')
+				  .pipe(csv())
+				  .on('data', function (data) {
+				    console.log('Address: %s Amount: %s', data.eth_address, data.amount);
+			    	addresses.push(data.eth_address);
+			    	whitelistAmounts.push(data.amount);
+
+			    	if(addresses.length == network.batchsize){
+
+						var tx = network.txparams;
+						tx.nonce = web3.toHex(Number(tempNonce));
+						console.log(web3.toDecimal(tx.nonce));
+						tempNonce++;
+						tx.gasPrice = web3.toHex(tx.gasPrice);
+						tx.gasLimit = web3.toHex(tx.gasLimit);
+						tx.to = network.sale.address;
+						tx.data = Sale.addWhitelist.getData(addresses, whitelistAmounts);
+						tx.gas = web3.toHex(tx.gasLimit);
+						var Tx = new EthTx(tx);
+						Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+						whitelistTransactions.push('0x' + Tx.serialize().toString('hex'));
+
+			    		addresses = [];
+			    		whitelistAmounts = [];
+			    	}
+				  }).on('end', function () {  // done
+    				fs.writeFileSync('./dist/signedWhitelistTransactions.json', JSON.stringify(whitelistTransactions, null, 2));
+  				  });
+
+				// setup complete
+				var tx = network.txparams;
+				tx.nonce = web3.toHex(Number(tempNonce));
+				console.log(web3.toDecimal(tx.nonce));
+				tempNonce++;
+				tx.gasPrice = web3.toHex(tx.gasPrice);
+				tx.gasLimit = web3.toHex(tx.gasLimit);
+				tx.to = network.sale.address;
+				tx.data = Sale.setSetupComplete.getData();
+				tx.gas = web3.toHex(tx.gasLimit);
+				var Tx = new EthTx(tx);
+				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+				postconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
+
+				// emergency
+				var tx = network.txparams;
+				tx.nonce = web3.toHex(Number(tempNonce));
+				console.log(web3.toDecimal(tx.nonce));
+				tempNonce++;
+				tx.gasPrice = web3.toHex(tx.gasPrice);
+				tx.gasLimit = web3.toHex(tx.gasLimit);
+				tx.to = network.sale.address;
+				tx.data = Sale.emergencyToggle.getData();
+				tx.gas = web3.toHex(tx.gasLimit);
+				var Tx = new EthTx(tx);
+				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+				console.log("NOT WRITING TO FILE, SAVE IF NEEDED: " + '0x' + Tx.serialize().toString('hex'));
+
+				fs.writeFileSync('./dist/signedPreconfigTransactions.json', JSON.stringify(preconfigTransactions, null, 2));
+				fs.writeFileSync('./dist/signedTimelockTransactions.json', JSON.stringify(timelockTransactions, null, 2));
+				fs.writeFileSync('./dist/signedPostconfigTransactions.json', JSON.stringify(postconfigTransactions, null, 2));
+				resolve();
 			})
 		} else reject(err);
 	})

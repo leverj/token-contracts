@@ -1,0 +1,15 @@
+{
+	"sale": {
+		"address": "0xb5c0651560e200d3e82be20799e47d9247947324",
+		"owner": "0x4458ba7a281f4fe0359a4a57c59d2af72ad53c36"
+	},
+	"txparams": {
+		"chainId": 1,
+		"gasLimit": 6110980,
+		"gasPrice": 33000000000
+	},
+	"batchsize": 10,
+	"wallet": "0x4458ba7a281f4fe0359a4a57c59d2af72ad53c36",
+	"presaleAddress": "0x09ae9886c971279e771030ad5da37f227fb1e7f9",
+	"presaleAmount" : "150000000000000000"
+}

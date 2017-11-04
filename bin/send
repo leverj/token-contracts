@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+var fs = require('fs');
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io'));
+var args = process.argv.slice(2);
+
+if (args.length === 0) {
+	console.log(`usage: send path/to/signed/transactions`);
+	process.exit(0);
+}
+
+var signedTransactions = JSON.parse(fs.readFileSync(args[0], 'utf-8'));
+
+var hashes = [];
+for (var i = 0 ; i < signedTransactions.length; i++) 
+   hashes.push(web3.eth.sendRawTransaction(signedTransactions[i]));
+
+console.log(hashes);
+

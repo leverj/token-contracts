@@ -59,6 +59,5 @@ typings/
 .env
 
 package-lock.json
-dist/*
-conf/*
 .node*
+.keys

@@ -1,0 +1,12 @@
+{
+	"sale": {
+		"address": "0xebd0e5ebb79725b3ce23f5bac34c21b623d6f7c7",
+		"owner": "0x00960f3265cf74fe268ea92e8efe59806347ea71"
+	},
+	"txparams": {
+		"chainId": 4,
+		"gasLimit": 6110980,
+		"gasPrice": 20000000000
+	},
+	"batchsize": 3
+}

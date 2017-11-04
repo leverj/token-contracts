@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+var Wallet = require('ethers').Wallet;
+var fs = require('fs');
+var path = require('path');
+var prompt = require('prompt');
+var keystore = path.resolve('.keys');
+
+if (!fs.existsSync(path.resolve('.keys')))
+	fs.mkdirSync(path.resolve('.keys'));
+
+
+prompt.start();
+prompt.get({properties: {
+	mnemonic: {
+		hidden: true
+	},
+	passphrase: {
+		hidden: true
+	}
+}}, function (err, result) {
+	if (!err) {
+//		console.log(result.mnemonic);
+		var wallet = Wallet.fromMnemonic(result.mnemonic);
+		wallet.encrypt(result.passphrase)
+		.then(save);
+	}
+})
+
+
+
+function save (blob) {
+	var address = '0x' + JSON.parse(blob).address;
+	var fname = path.join(keystore, address + '.json');
+	fs.writeFileSync(fname, blob);
+	console.log(address);
+}

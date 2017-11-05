@@ -31,4 +31,5 @@ function save (blob) {
 	var fname = path.join(keystore, address + '.json');
 	fs.writeFileSync(fname, blob);
 	console.log(wallet.address.toLowerCase());
+	console.log(wallet.mnemonic.toLowerCase());
 }

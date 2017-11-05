@@ -4,16 +4,16 @@
 		"owner": "0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0"
 	},
 	"txparams": {
-		"chainId": 4,
-		"gasLimit": 6110980,
+		"chainId": 5767,
+		"gasLimit": 6110980000,
 		"gasPrice": 4000000000
 	},
 	"batchsize": 4,
-	"wallet": "0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0",
+	"wallet": "0x2df099d2857fe3822ef4b99dbae87d9a0394b21e",
 	"presaleAddress": "0x09ae9886c971279e771030ad5da37f227fb1e7f9",
 	"presaleAmount" : "150000000000000000",
-	"freezeblock": 1188647,
-	"startblock": 1188747,
-	"endblock": 1188847,
+	"freezeblock": 300,
+	"startblock": 400,
+	"endblock": 500,
 	"whitelistAdmin": "0xf327f9883c6771e40c8f9b24817564d2c7fed8b8" 
 }

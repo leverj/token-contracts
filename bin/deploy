@@ -1,0 +1,56 @@
+#!/usr/bin/env node
+var prompt = require('prompt');
+var timeLocks = require('../conf/timeLocks');
+var network = require('../conf/mainnet');	// Change this as needed. Nothing major needs to change.
+var Wallet = require('ethers').Wallet;
+var fs = require('fs');
+var EthTx = require('ethereumjs-tx');
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var build = require('../dist/contracts');
+var abi = JSON.parse(build.contracts['contracts/Sale.sol:Sale'].abi);
+var bin = build.contracts['contracts/Sale.sol:Sale'].bin;
+var Sale = web3.eth.contract(abi);
+var csv = require('csv-parser');
+
+prompt.start();
+prompt.get({properties: {
+				address: {
+					required: true
+				},
+				nonce: {
+					require: true
+				},
+				password: {
+					required: true,
+					hidden: true
+				}
+			}	
+	}, function (err, result) {
+		return new Promise ((resolve ,reject) => {
+		if (!err) {
+			var encrypted = fs.readFileSync('.keys/' + result.address.toLowerCase() + '.json', 'utf-8');
+			Wallet.fromEncryptedWallet(encrypted, result.password)
+			.then(function (wallet) {
+				var deployTransactions = [];
+				tempNonce = Number(result.nonce);
+
+				var tx = network.txparams;
+				tx.nonce = web3.toHex(tempNonce);
+				console.log(web3.toDecimal(tx.nonce));
+				tempNonce++;
+				tx.gasPrice = web3.toHex(tx.gasPrice);
+				tx.gasLimit = web3.toHex(tx.gasLimit);
+				tx.data = Sale.new.getData(network.sale.owner, web3.eth.blockNumber + 300, web3.eth.blockNumber + 400, network.endblock, network.whitelistAdmin, {data: '0x' + bin});
+				tx.gas = web3.toHex(tx.gasLimit);
+				var Tx = new EthTx(tx);
+				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+				deployTransactions.push('0x' + Tx.serialize().toString('hex'));
+				console.log('0x' + Tx.serialize().toString('hex'));
+				fs.writeFileSync('./dist/deployTransactions.json', JSON.stringify(deployTransactions, null, 2));
+				resolve();
+			})
+		} else reject(err);
+	})
+})
+

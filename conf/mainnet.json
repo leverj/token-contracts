@@ -1,19 +1,19 @@
 {
 	"sale": {
-		"address": "0x255Bb5c764943f29389a78a6Ef39b7B57263a7dD",
+		"address": "0xf2Fbb2939981594e25d93e6226231FcC1b01718e",
 		"owner": "0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0"
 	},
 	"txparams": {
-		"chainId": 4,
+		"chainId": 1,
 		"gasLimit": 6110980,
-		"gasPrice": 4000000000
+		"gasPrice": 33000000000
 	},
 	"batchsize": 4,
-	"wallet": "0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0",
+	"wallet": "0x42338FF7E4C3B999Eb69B521323657017cE08727",
 	"presaleAddress": "0x09ae9886c971279e771030ad5da37f227fb1e7f9",
 	"presaleAmount" : "150000000000000000",
-	"freezeblock": 1188647,
-	"startblock": 1188747,
-	"endblock": 1188847,
+	"freezeblock": 4494239,
+	"startblock": 4494428,
+	"endblock": 4688045,
 	"whitelistAdmin": "0xf327f9883c6771e40c8f9b24817564d2c7fed8b8" 
 }

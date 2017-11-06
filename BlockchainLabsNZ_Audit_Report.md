@@ -41,19 +41,19 @@ The audit report is focused on the following key areas - though this is not an e
 ## Findings
 ### Minor
 - **Add a fallback function for non tech investors** -  Consider adding a fallback function so just sending eth to the contract would be enough to purchase tokens ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/7)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Measure time milestones with timestamps, not block height** -  The sale has 3 milestones `freezeBlock`, `startBlock`, and `endBlock`. ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/6)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Use the same version of Solidity for each contract** - Both versions `^0.4.11`, and `^0.4.8` are used in the contracts ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/5)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Update README.md with clearer instructions for running tests in custom environment** - Tests should be able to be reproduced in a fresh environment ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/11)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Consistent formatting** -  Minor formatting inconsistencies to be fixed on [#L13](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L13]), [#L79](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L79) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/3)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Declare variable with memory as the data location** - This line makes the compiler give out a warning, changing it to ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/2)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 - **Imported file is not in the repo and the declaration is never used** -  See line [#136](https://github.com/ElKornacio/contracts-early/blob/master/contracts/LATokenMinter.sol#L136]) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/1)
-  - [ ] Fixed
+  - [ ] *Not fixed*
 
 ### Moderate
 - **SafeMath should be used for all mathematical operations** - Is imported, but it is not used: - [`Sale.sol` #L76](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L76) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/4)
@@ -64,7 +64,6 @@ The audit report is focused on the following key areas - though this is not an e
 ### Critical
 - None found
 
-We have reviewed this document to ensure that there are no ommisions and that the developers' comments are a fair summary of each function.
 
 ## Conclusion
 Overall we have been satisfied with the resulting contracts following the audit feedback period. We took part in carefully reviewing all source code provided to fully satisfy test coverage in all areas, including deployment on the Kovan test network. 

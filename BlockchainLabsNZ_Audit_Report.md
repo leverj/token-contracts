@@ -57,7 +57,7 @@ The audit report is focused on the following key areas - though this is not an e
 
 ### Moderate
 - **SafeMath should be used for all mathematical operations** - Is imported, but it is not used: - [`Sale.sol` #L76](https://github.com/leverj/token-contracts/blob/master/contracts/Sale.sol#L76) ... [View on GitHub](https://github.com/BlockchainLabsNZ/leverj-contracts/issues/4)
-  - [ ] Fixed
+  - [x] Fixed [3d156439](https://github.com/leverj/token-contracts/commit/3d15643913d6b15b078c1c723dda66874d4e5883)
 
 ### Major
 - None found

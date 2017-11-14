@@ -17,7 +17,7 @@ sudo apt-get install software-properties-common
 sudo add-apt-repository -y ppa:ethereum/ethereum
 sudo apt-get update
 sudo apt-get install ethereum
-sudo apt-get isntall solc
+sudo apt-get install solc
 
 # NodeJS
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -

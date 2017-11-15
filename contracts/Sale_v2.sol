@@ -12,7 +12,7 @@ contract Sale {
 
     // STORAGE
     uint public constant TOTAL_SUPPLY = 1000000000000000000;
-    uint public constant MAX_PRIVATE = 750200000000000000;
+    uint public constant MAX_PRIVATE = 750000000000000000;
 
     uint8 public constant DECIMALS = 9;
     string public constant NAME = "Leverj";

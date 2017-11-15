@@ -82,9 +82,10 @@ describe('Disbursement', () => {
 
       describe('Disbursement withdraw function (invalid params)', () => {
             it('Ensuring the modifiers are working', async () => {
-                  const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const disbursementContract2 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
-                  const disbursementContract3 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, 1508347537);
+                  const timeLockStart = Math.round((new Date()).getTime() / 1000) + 2592000 // now + 1 month
+                  const disbursementContract = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, timeLockStart);
+                  const disbursementContract2 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, timeLockStart);
+                  const disbursementContract3 = await disbursement.deployDisbursement(web3.eth.accounts[1], 1000, timeLockStart);
                   const humanContract = await HumanStandardToken.deployHumanStandardToken(100,'ConsenSys',10,'CS',web3.eth.accounts[0]);
                   await HumanStandardToken.removeTransferLockHumanStandardToken(humanContract, web3.eth.accounts[0]);
                   //Checking the isSetup modifier

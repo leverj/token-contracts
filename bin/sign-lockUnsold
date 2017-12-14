@@ -1,0 +1,64 @@
+#!/usr/bin/env node
+var prompt = require('prompt');
+var timeLocks = require('../conf/test_timeLocks');
+var oldAllocations = require('../conf/oldallocations');
+var network = require('../conf/mainnet');	// Change this as needed. Nothing major needs to change.
+var Wallet = require('ethers').Wallet;
+var fs = require('fs');
+var BN = require('bn.js');
+var EthTx = require('ethereumjs-tx');
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var build = require('../dist/contracts');
+var abi = JSON.parse(build.contracts['contracts/Sale.sol:Sale'].abi);
+var Sale = web3.eth.contract(abi).at(network.sale.address);
+var csv = require('csv-parser');
+
+console.log('nonce from infura: ' + web3.eth.getTransactionCount('0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0'));
+
+prompt.start();
+prompt.get({properties: {
+				address: {
+					required: true
+				},
+				nonce: {
+					require: true
+				},
+				password: {
+					required: true,
+					hidden: true
+				}
+			}	
+	}, function (err, result) {
+		return new Promise ((resolve ,reject) => {
+		if (!err) {
+			var encrypted = fs.readFileSync('.keys/' + result.address.toLowerCase() + '.json', 'utf-8');
+			Wallet.fromEncryptedWallet(encrypted, result.password)
+			.then(function (wallet) {
+				var lockUnsoldTransactions = [];
+
+                                var tempNonce = Number(result.nonce);
+				var nonceFromWeb3 = web3.eth.getTransactionCount('0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0');
+				console.log('nonce from infura: ' + web3.eth.getTransactionCount('0x434dc9ef22b28cb1e9669d0a7abddabe8682e3c0'));
+
+				var tx = network.txparams;
+                                tx.nonce = web3.toHex(tempNonce);
+                                console.log(web3.toDecimal(tx.nonce));
+                                tempNonce++;
+                                tx.gasPrice = web3.toHex(tx.gasPrice);
+                                tx.gasLimit = web3.toHex(tx.gasLimit);
+                                tx.to = network.sale.address;
+				tx.data = Sale.lockUnsoldTokens.getData('0x0AC1EB22B98cDd76796401FF462a96Da9DBF07D4');
+                                tx.gas = web3.toHex(tx.gasLimit);
+                                var Tx = new EthTx(tx);
+                                Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+                                lockUnsoldTransactions.push('0x' + Tx.serialize().toString('hex'));
+                                console.log('0x' + Tx.serialize().toString('hex'));
+                                console.log(tx);
+
+                                fs.writeFileSync('./dist/lockUnsoldTransactions.json', JSON.stringify(lockUnsoldTransactions, null, 2));
+			})
+		} else reject(err);
+	})
+})
+

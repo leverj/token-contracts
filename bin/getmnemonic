@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+var prompt = require('prompt');
+var timeLocks = require('../conf/test_timeLocks');
+var oldAllocations = require('../conf/oldallocations');
+var network = require('../conf/mainnet');       // Change this as needed. Nothing major needs to change.
+var Wallet = require('ethers').Wallet;
+var fs = require('fs');
+var BN = require('bn.js');
+var EthTx = require('ethereumjs-tx');
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var build = require('../dist/contracts');
+var abi = JSON.parse(build.contracts['contracts/Sale.sol:Sale'].abi);
+var Sale = web3.eth.contract(abi).at(network.sale.address);
+var csv = require('csv-parser');
+
+var wallet = Wallet.createRandom();
+console.log('address: ' + wallet.address);
+console.log('key:' + wallet.privateKey);
+
+var HDNode = require('ethers').HDNode;
+var mnemonic = HDNode.entropyToMnemonic(wallet.privateKey);
+console.log('mnemonic:' + HDNode.entropyToMnemonic(wallet.privateKey));
+
+var newWallet = Wallet.fromMnemonic(mnemonic);
+console.log('address from new wallet: ' + newWallet.address);

@@ -72,67 +72,67 @@ for (var i = 0 ; i < timeLocks.length; i += network.batchsize) {
 
 // bunch of pointless tabs remaining :) 
 
-				// setup complete
-				var tx = network.txparams;
-				tx.nonce = web3.toHex(Number(tempNonce));
-				tempNonce++;
-				tx.gasPrice = web3.toHex(tx.gasPrice);
-				tx.gasLimit = web3.toHex(tx.gasLimit);
-				tx.to = network.sale.address;
-				tx.data = Sale.setSetupComplete.getData();
-				tx.gas = web3.toHex(tx.gasLimit);
-				var Tx = new EthTx(tx);
-				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
-				postconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
+// setup complete
+var tx = network.txparams;
+tx.nonce = web3.toHex(Number(tempNonce));
+tempNonce++;
+tx.gasPrice = web3.toHex(tx.gasPrice);
+tx.gasLimit = web3.toHex(tx.gasLimit);
+tx.to = network.sale.address;
+tx.data = Sale.setSetupComplete.getData();
+tx.gas = web3.toHex(tx.gasLimit);
+var Tx = new EthTx(tx);
+Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+postconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
 
-				// emergency
-				var tx = network.txparams;
-				tx.nonce = web3.toHex(Number(tempNonce));
-				tempNonce++;
-				tx.gasPrice = web3.toHex(tx.gasPrice);
-				tx.gasLimit = web3.toHex(tx.gasLimit);
-				tx.to = network.sale.address;
-				tx.data = Sale.emergencyToggle.getData();
-				tx.gas = web3.toHex(tx.gasLimit);
-				var Tx = new EthTx(tx);
-				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
-				postconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
-		
-				// whitelisters
-				var tempCount = 0;
-				var addresses = [];
-				var whitelistAmounts = [];
-				fs.createReadStream('./conf/results-20171103-054519_FINAL.csv')
-				  .pipe(csv())
-				  .on('data', function (data) {
-				    console.log('Address: %s Amount: %s', data.eth_address, data.amount);
-			    	addresses.push(data.eth_address);
-			    	whitelistAmounts.push(data.amount);
+// emergency
+var tx = network.txparams;
+tx.nonce = web3.toHex(Number(tempNonce));
+tempNonce++;
+tx.gasPrice = web3.toHex(tx.gasPrice);
+tx.gasLimit = web3.toHex(tx.gasLimit);
+tx.to = network.sale.address;
+tx.data = Sale.emergencyToggle.getData();
+tx.gas = web3.toHex(tx.gasLimit);
+var Tx = new EthTx(tx);
+Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+postconfigTransactions.push('0x' + Tx.serialize().toString('hex'));
 
-			    	if(addresses.length == network.batchsize){
+// whitelisters
+var tempCount = 0;
+var addresses = [];
+var whitelistAmounts = [];
+fs.createReadStream('./conf/results-20171103-054519_FINAL.csv')
+.pipe(csv())
+.on('data', function (data) {
+console.log('Address: %s Amount: %s', data.eth_address, data.amount);
+addresses.push(data.eth_address);
+whitelistAmounts.push(data.amount);
 
-						var tx = network.txparams;
-						tx.nonce = web3.toHex(Number(tempNonce));
-						tempNonce++;
-						tx.gasPrice = web3.toHex(tx.gasPrice);
-						tx.gasLimit = web3.toHex(tx.gasLimit);
-						tx.to = network.sale.address;
-						tx.data = Sale.addWhitelist.getData(addresses, whitelistAmounts);
-						tx.gas = web3.toHex(tx.gasLimit);
-						var Tx = new EthTx(tx);
-						Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
-						whitelistTransactions.push('0x' + Tx.serialize().toString('hex'));
+if(addresses.length == network.batchsize){
 
-			    		addresses = [];
-			    		whitelistAmounts = [];
-			    	}
-				  }).on('end', function () {  // done
-    				fs.writeFileSync('./dist/signedWhitelistTransactions.json', JSON.stringify(whitelistTransactions, null, 2));
-  				  });
+	var tx = network.txparams;
+	tx.nonce = web3.toHex(Number(tempNonce));
+	tempNonce++;
+	tx.gasPrice = web3.toHex(tx.gasPrice);
+	tx.gasLimit = web3.toHex(tx.gasLimit);
+	tx.to = network.sale.address;
+	tx.data = Sale.addWhitelist.getData(addresses, whitelistAmounts);
+	tx.gas = web3.toHex(tx.gasLimit);
+	var Tx = new EthTx(tx);
+	Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));
+	whitelistTransactions.push('0x' + Tx.serialize().toString('hex'));
 
-				fs.writeFileSync('./dist/signedPreconfigTransactions.json', JSON.stringify(preconfigTransactions, null, 2));
-				fs.writeFileSync('./dist/signedTimelockTransactions.json', JSON.stringify(timelockTransactions, null, 2));
-				fs.writeFileSync('./dist/signedPostconfigTransactions.json', JSON.stringify(postconfigTransactions, null, 2));
+	addresses = [];
+	whitelistAmounts = [];
+}
+}).on('end', function () {  // done
+fs.writeFileSync('./dist/signedWhitelistTransactions.json', JSON.stringify(whitelistTransactions, null, 2));
+  });
 
-			console.log(`WRITE DOWN THIS MNEMONIC IF YOU WANA LATER DO SOME WEIRD SHIT WITH IT`);
-			console.log(wallet.mnemonic);
+fs.writeFileSync('./dist/signedPreconfigTransactions.json', JSON.stringify(preconfigTransactions, null, 2));
+fs.writeFileSync('./dist/signedTimelockTransactions.json', JSON.stringify(timelockTransactions, null, 2));
+fs.writeFileSync('./dist/signedPostconfigTransactions.json', JSON.stringify(postconfigTransactions, null, 2));
+
+console.log(`WRITE DOWN THIS MNEMONIC IF YOU WANA LATER DO SOME WEIRD SHIT WITH IT`);
+console.log(wallet.mnemonic);

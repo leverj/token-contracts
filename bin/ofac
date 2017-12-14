@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+var fs = require('fs');
+var build = require('../dist/contracts');
+var csv = require('csv-parser');
+var request = require('request');
+var abi = JSON.parse(build.contracts['contracts/HumanStandardToken.sol:HumanStandardToken'].abi);
+var contractAddress = '0x0f4ca92660efad97a9a70cb0fe969c755439772c';
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var token = web3.eth.contract(abi).at(contractAddress);
+
+fs.createReadStream('./searches_30.csv')
+.pipe(csv())
+.on('data', (row)=>{
+
+    var nameToCheck = row.search_term;
+    var address;
+
+    fs.createReadStream('./results-20171207-222518.csv')
+        .pipe(csv())
+        .on('data', (row1)=>{
+
+            if(row1.name === nameToCheck){
+                let innerAddress = row1.eth_address;
+
+		var tokenBalance = token.balanceOf(innerAddress).toString(10);
+
+                if(tokenBalance === ''){
+                   if(web3.eth.getTransactionCount(innerAddress).toString(10) !== '0'){
+                       console.log('empty balance but tx count not zero, ' + innerAddress + ':' + web3.eth.getTransactionCount(innerAddress).toString(10));
+                   }
+	        }else if(!isNaN(tokenBalance)){
+                  if(tokenBalance > 0){
+                    console.log('*** ILLEGAL PURCHASE, name: %s, address: %s, amount: %s', nameToCheck, innerAddress, tokenBalance);
+                  }
+                }
+
+            }
+
+        });
+
+});
+

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 var prompt = require('prompt');
-var timeLocks = require('../conf/timeLocks');
-var network = require('../conf/mainnet');	// Change this as needed. Nothing major needs to change.
+//var network = require('../conf/mainnet');	// Change this as needed. Nothing major needs to change.
+var network = require('../conf/rinkeby');
 var Wallet = require('ethers').Wallet;
 var fs = require('fs');
 var EthTx = require('ethereumjs-tx');
 var Web3 = require('web3');
-var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io'));
 var build = require('../dist/contracts');
 var abi = JSON.parse(build.contracts['contracts/Sale.sol:Sale'].abi);
 var bin = build.contracts['contracts/Sale.sol:Sale'].bin;
@@ -41,7 +41,7 @@ prompt.get({properties: {
 				tempNonce++;
 				tx.gasPrice = web3.toHex(tx.gasPrice);
 				tx.gasLimit = web3.toHex(tx.gasLimit);
-				tx.data = Sale.new.getData(network.sale.owner, web3.eth.blockNumber + 300, web3.eth.blockNumber + 400, network.endblock, network.whitelistAdmin, {data: '0x' + bin});
+				tx.data = Sale.new.getData(network.sale.owner, web3.eth.blockNumber + 130, web3.eth.blockNumber + 140, network.endblock, network.whitelistAdmin, {data: '0x' + bin});
 				tx.gas = web3.toHex(tx.gasLimit);
 				var Tx = new EthTx(tx);
 				Tx.sign(new Buffer(wallet.privateKey.slice(2), 'hex'));

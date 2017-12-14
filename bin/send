@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var fs = require('fs');
 var Web3 = require('web3');
-var web3 = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/H4nCub64cDKdmR10e3qG'));
+var web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io'));
 var args = process.argv.slice(2);
 
 if (args.length === 0) {
